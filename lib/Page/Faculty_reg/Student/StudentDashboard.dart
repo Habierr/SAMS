@@ -1,0 +1,616 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// FILE: lib/Page/Student/StudentDashboard.dart
+// Boundary Class — Student Dashboard
+// ─────────────────────────────────────────────────────────────────────────────
+
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import '../../../Provider/ORController.dart';
+import 'StudentOR.dart';
+import 'RegisteredCourse.dart';
+
+class StudentDashboard extends StatefulWidget {
+  final String studentID;
+
+  const StudentDashboard({super.key, required this.studentID});
+
+  @override
+  State<StudentDashboard> createState() => _StudentDashboardState();
+}
+
+class _StudentDashboardState extends State<StudentDashboard> {
+  // ── Student data dari Firestore ──────────────────────────────────────────
+  String _studentName = '';
+  String _programme = '';
+  String _year = '';
+  String _semester = '';
+  int _totalSubjects = 0;
+  int _totalCreditHours = 0;
+
+  // ── OR Session data ──────────────────────────────────────────────────────
+  bool _orActive = false;
+  String _orPeriod = '';
+
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // 1. Load student profile
+      final studentDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.studentID)
+          .get();
+
+      if (!mounted) return;
+
+      if (studentDoc.exists) {
+        final data = studentDoc.data()!;
+        setState(() {
+          _studentName = data['name'] ?? '';
+          _programme = data['programme'] ?? '';
+          _year = data['year']?.toString() ?? '';
+          _semester = data['semester'] ?? '';
+        });
+      }
+
+      // 2. Load OR session aktif
+      final orQuery = await FirebaseFirestore.instance
+          .collection('orSessions')
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (!mounted) return;
+
+      if (orQuery.docs.isNotEmpty) {
+        final orData = orQuery.docs.first.data();
+        final startDate = DateTime.tryParse(orData['startDate'] ?? '');
+        final endDate = DateTime.tryParse(orData['endDate'] ?? '');
+
+        String period = '';
+        if (startDate != null && endDate != null) {
+          const months = [
+            '',
+            'Jan',
+            'Feb',
+            'Mar',
+            'Apr',
+            'May',
+            'Jun',
+            'Jul',
+            'Aug',
+            'Sep',
+            'Oct',
+            'Nov',
+            'Dec'
+          ];
+          period =
+              '${startDate.day} ${months[startDate.month]} - ${endDate.day} ${months[endDate.month]}';
+        }
+
+        setState(() {
+          _orActive = orData['isActive'] ?? false;
+          _orPeriod = period;
+        });
+      }
+
+      // 3. Load registered courses untuk student ni
+      final regQuery = await FirebaseFirestore.instance
+          .collection('registrations')
+          .where('studentID', isEqualTo: widget.studentID)
+          .where('regStatus', isEqualTo: 'Registered')
+          .get();
+
+      if (!mounted) return;
+
+      // Kira unique subjects dan total credit hours
+      final Set<String> uniqueSubjects = {};
+      int totalCH = 0;
+
+      for (final doc in regQuery.docs) {
+        final d = doc.data();
+        final subCode = d['subCode'] ?? '';
+        final classType = d['classType'] ?? '';
+
+        // Kira sekali sahaja per subject (guna lecture je)
+        if (classType == 'Lecture' && !uniqueSubjects.contains(subCode)) {
+          uniqueSubjects.add(subCode);
+          totalCH += (d['creditHour'] as num?)?.toInt() ?? 0;
+        }
+      }
+
+      setState(() {
+        _totalSubjects = uniqueSubjects.length;
+        _totalCreditHours = totalCH;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading data: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  // ── Navigate ke StudentOR ────────────────────────────────────────────────
+  void _goToCourseRegistration() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) => ORController(),
+          child: StudentOR(
+            studentID: widget.studentID,
+            studentName: _studentName,
+            programme: _programme,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Navigate ke RegisteredCoursePage ────────────────────────────────────
+  void _goToRegisteredCourse() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (context) => ORController()
+            ..setCurrentUser(studentID: widget.studentID)
+            ..loadData(),
+          child: const RegisteredCourse(),
+        ),
+      ),
+    ).then((_) {
+      // Refresh dashboard stats selepas balik dari RegisteredCourse
+      _loadData();
+    });
+  }
+
+  // ── Initials dari nama ───────────────────────────────────────────────────
+  String _getInitials(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
+      return parts[0][0].toUpperCase();
+    }
+    return '?';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF2F4F7),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF1AAFA0)),
+            )
+          : Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: RefreshIndicator(
+                    color: const Color(0xFF1AAFA0),
+                    onRefresh: _loadData,
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        _buildProfileCard(),
+                        const SizedBox(height: 12),
+                        _buildStatsRow(),
+                        const SizedBox(height: 12),
+                        _buildORSessionCard(),
+                        const SizedBox(height: 12),
+                        _buildMenuCard(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  // ── Header ───────────────────────────────────────────────────────────────
+  Widget _buildHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF1AAFA0), Color(0xFF0D8C7F)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new,
+                    color: Colors.white, size: 20),
+                onPressed: () => Navigator.pop(context),
+              ),
+              const Expanded(
+                child: Text(
+                  'STUDENT ACADEMIC\nMANAGEMENT',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    'https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Universiti_Malaysia_Pahang_logo.svg/200px-Universiti_Malaysia_Pahang_logo.svg.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.school,
+                      color: Color(0xFF1AAFA0),
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Profile Card ─────────────────────────────────────────────────────────
+  Widget _buildProfileCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar initials
+          Container(
+            width: 52,
+            height: 52,
+            decoration: const BoxDecoration(
+              color: Color(0xFFD6F5F1),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                _getInitials(_studentName),
+                style: const TextStyle(
+                  color: Color(0xFF0D8C7F),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _studentName,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${widget.studentID} · Year $_year',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                _semester,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Stats Row ────────────────────────────────────────────────────────────
+  Widget _buildStatsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatBox(
+            value: '$_totalSubjects',
+            label: 'Subjects',
+            color: const Color(0xFF5B8CF5),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatBox(
+            value: '$_totalCreditHours',
+            label: 'Credit hours',
+            color: const Color(0xFF1AAFA0),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatBox({
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── OR Session Card ──────────────────────────────────────────────────────
+  Widget _buildORSessionCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF1AAFA0), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'OR session',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _orActive
+                      ? const Color(0xFFD6F5F1)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _orActive ? 'Active' : 'Inactive',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: _orActive
+                        ? const Color(0xFF0D8C7F)
+                        : Colors.grey.shade500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                'Status',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          if (_orPeriod.isNotEmpty)
+            Text(
+              'Period: $_orPeriod',
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF1A1A2E),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              // ── UPDATED: navigate ke RegisteredCoursePage ──
+              onPressed: _goToRegisteredCourse,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFCCCCCC)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              child: const Text(
+                'Registered course',
+                style: TextStyle(
+                  color: Color(0xFF1A1A2E),
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Menu Card ────────────────────────────────────────────────────────────
+  Widget _buildMenuCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Menu',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1AAFA0),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMenuButton(
+                  label: 'Course Registration',
+                  isActive: true,
+                  onTap: _goToCourseRegistration,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMenuButton(
+                  label: 'My Courses',
+                  isActive: false,
+                  onTap: () {},
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMenuButton(
+                  label: 'Co-curriculum',
+                  isActive: false,
+                  onTap: () {},
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildMenuButton(
+                  label: 'Finance',
+                  isActive: false,
+                  onTap: () {},
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuButton({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF1AAFA0) : const Color(0xFFF2F4F7),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isActive ? Colors.white : const Color(0xFF1A1A2E),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
