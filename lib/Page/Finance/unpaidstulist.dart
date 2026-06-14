@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+// Clean Architecture Modules matching SDD configuration mapping
+import '../../provider/sams_financial_controller.dart';
+import 'treasury_stu_ledger.dart';
 
 class UnpaidStuList extends StatefulWidget {
   const UnpaidStuList({super.key});
@@ -11,6 +17,9 @@ class UnpaidStuList extends StatefulWidget {
 class _UnpaidStuListState extends State<UnpaidStuList> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+
+  final SAMSFinancialController _financialController =
+      SAMSFinancialController();
 
   // Tracks checked checkboxes by storing their unique Matric IDs
   final Set<String> _selectedStudentIds = {};
@@ -32,6 +41,63 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     super.dispose();
   }
 
+  // Live EmailJS network pipeline execution engine
+  Future<void> _sendLiveEmailReminder({
+    required String targetName,
+    required String targetEmail,
+    required String targetBalance,
+  }) async {
+    const String serviceId = 'service_nhkos7p';
+    const String templateId = 'template_le2c00i';
+    const String publicKey = '--_2ij_sFZf0k8Vtl';
+
+    final Uri apiEndpoint =
+        Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+
+    try {
+      await http.post(
+        apiEndpoint,
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'http://localhost',
+        },
+        body: jsonEncode({
+          'service_id': serviceId,
+          'template_id': templateId,
+          'user_id': publicKey,
+          'template_params': {
+            'name': targetName,
+            'to_email': targetEmail,
+            'feeBalance': targetBalance,
+          },
+        }),
+      );
+    } catch (e) {
+      debugPrint("Mailing error execution hook: $e");
+    }
+  }
+
+  // Iterates and executes the email pipeline for all checked items collectively
+  Future<void> _processBulkNotificationEmails() async {
+    for (String id in _selectedStudentIds) {
+      try {
+        final doc =
+            await FirebaseFirestore.instance.collection('users').doc(id).get();
+        if (doc.exists) {
+          final sData = doc.data() as Map<String, dynamic>;
+          double bal = await _calculateStudentSemBalance(id);
+          await _sendLiveEmailReminder(
+            targetName: sData['name'] ?? 'Student',
+            targetEmail: sData['email'] ?? 'student@student.umpsa.edu.my',
+            targetBalance: bal.toStringAsFixed(2),
+          );
+        }
+      } catch (e) {
+        debugPrint("Bulk item missing hook: $e");
+      }
+    }
+  }
+
   // Helper calculation function to check outstanding fee balance context
   Future<double> _calculateStudentSemBalance(String matricId) async {
     final receiptSnapshot = await FirebaseFirestore.instance
@@ -43,7 +109,8 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     double semReceived = 0.0;
     for (var doc in receiptSnapshot.docs) {
       final rData = doc.data();
-      if (rData['semester'] == 'SEM 2 25/26') {
+      if (rData['semester'] == 'SEM 2 25/26' ||
+          rData['semester'] == 'SEM II 25/26') {
         semReceived +=
             double.tryParse(rData['totalReceived'].toString()) ?? 0.0;
       }
@@ -208,13 +275,14 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     );
   }
 
-  // Database Execution Action Loops
+  // Database Execution Action Loops using the SDD Controller mapping pipeline
   Future<void> _executeBulkBlockStatus(bool standardBlockTrigger) async {
+    String nextStatusString = standardBlockTrigger ? 'BLOCKED' : 'NOT BLOCKED';
+
     for (String id in _selectedStudentIds) {
-      await FirebaseFirestore.instance.collection('users').doc(id).update({
-        'status': standardBlockTrigger ? 'BLOCKED' : 'NOT BLOCKED',
-      });
+      await _financialController.updateStudentStatus(id, nextStatusString);
     }
+
     _showSuccessModal(
       Icons.check_circle,
       Colors.black,
@@ -226,9 +294,9 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
 
   Future<void> _toggleSingleBlock(String matricId, String currentStatus) async {
     bool isCurrentlyBlocked = currentStatus.trim().toUpperCase() == 'BLOCKED';
-    await FirebaseFirestore.instance.collection('users').doc(matricId).update({
-      'status': isCurrentlyBlocked ? 'NOT BLOCKED' : 'BLOCKED',
-    });
+    String nextStatusString = isCurrentlyBlocked ? 'NOT BLOCKED' : 'BLOCKED';
+
+    await _financialController.updateStudentStatus(matricId, nextStatusString);
   }
 
   @override
@@ -379,11 +447,14 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                           message: 'The people you selected will be notified',
                           actionButtonText: 'NOTIFY',
                           actionButtonColor: Colors.blue.shade800,
-                          onConfirm: () => _showSuccessModal(
-                            Icons.notifications_active_outlined,
-                            Colors.black,
-                            'Notification have been sent to their email',
-                          ),
+                          onConfirm: () async {
+                            await _processBulkNotificationEmails();
+                            _showSuccessModal(
+                              Icons.notifications_active_outlined,
+                              Colors.black,
+                              'Notification have been sent to their email',
+                            );
+                          },
                         );
                       },
                     ),
@@ -482,8 +553,9 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                       .where('role', isEqualTo: 'student')
                       .snapshots(),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
+                    }
 
                     final rawDocs = snapshot.data!.docs;
 
@@ -491,24 +563,22 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                     return FutureBuilder<List<QueryDocumentSnapshot>>(
                       future: Future.wait(
                         rawDocs.map((doc) async {
-                          double bal = await _calculateStudentSemBalance(
-                            doc.id,
-                          );
+                          double bal =
+                              await _calculateStudentSemBalance(doc.id);
                           return MapEntry(doc, bal);
                         }),
                       ).then((entries) {
                         return entries
-                            .where(
-                              (entry) => entry.value > 0,
-                            ) // Only displays students with outstanding fee balance > 0
+                            .where((entry) => entry.value > 0)
                             .map((entry) => entry.key)
                             .toList();
                       }),
                       builder: (context, futureSnapshot) {
-                        if (!futureSnapshot.hasData)
+                        if (!futureSnapshot.hasData) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
+                        }
 
                         final studentDocs = futureSnapshot.data!;
 
@@ -522,9 +592,8 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
 
                         if (_currentFilteredStudents.isEmpty) {
                           return const Center(
-                            child: Text(
-                              'No unsettled student entries available.',
-                            ),
+                            child:
+                                Text('No unsettled student entries available.'),
                           );
                         }
 
@@ -537,6 +606,8 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
 
                             final name = data['name'] ?? 'N/A';
                             final sponsor = data['sponsor'] ?? 'NONE';
+                            final studentEmail =
+                                data['email'] ?? 'student@student.umpsa.edu.my';
                             final currentStatus =
                                 (data['status'] ?? 'NOT BLOCKED').toString();
                             bool isBlocked =
@@ -554,9 +625,8 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                               child: Row(
                                 children: [
                                   Checkbox(
-                                    value: _selectedStudentIds.contains(
-                                      matricId,
-                                    ),
+                                    value:
+                                        _selectedStudentIds.contains(matricId),
                                     onChanged: (bool? checkedValue) {
                                       setState(() {
                                         if (checkedValue == true) {
@@ -623,21 +693,31 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                           height: 24,
                                           child: ElevatedButton(
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(
-                                                0xFF1B365D,
-                                              ),
+                                              backgroundColor:
+                                                  const Color(0xFF1B365D),
                                               padding: EdgeInsets.zero,
                                               shape: RoundedRectangleBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                               ),
                                             ),
-                                            onPressed: () => _showSuccessModal(
-                                              Icons
-                                                  .notifications_active_outlined,
-                                              Colors.black,
-                                              'Notification has been sent to $name\'s email',
-                                            ),
+                                            onPressed: () async {
+                                              double bal =
+                                                  await _calculateStudentSemBalance(
+                                                      matricId);
+                                              await _sendLiveEmailReminder(
+                                                targetName: name,
+                                                targetEmail: studentEmail,
+                                                targetBalance:
+                                                    bal.toStringAsFixed(2),
+                                              );
+                                              _showSuccessModal(
+                                                Icons
+                                                    .notifications_active_outlined,
+                                                Colors.black,
+                                                'Notification has been sent to $name\'s email',
+                                              );
+                                            },
                                             child: const Text(
                                               'NOTIFY',
                                               style: TextStyle(
@@ -653,7 +733,6 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                           width: 65,
                                           height: 24,
                                           child: ElevatedButton(
-                                            // DYNAMIC RENDERING BLOCK: Toggles display presentation state dynamically based on item data statuses
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: isBlocked
                                                   ? Colors.green

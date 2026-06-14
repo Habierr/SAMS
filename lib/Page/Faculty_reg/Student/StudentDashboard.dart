@@ -3,6 +3,7 @@
 // Boundary Class — Student Dashboard
 // ✅ Menu/Registered-course buttons guna InkWell ripple (bukan warna statik)
 // ✅ OR session status guna ORController.activeSession (auto isActive)
+// ✅ Gatekeeping Interception: Blocked financial status denies academic access
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter/material.dart';
@@ -25,11 +26,13 @@ class StudentDashboard extends StatefulWidget {
 
 class _StudentDashboardState extends State<StudentDashboard> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   // ── Student data dari Firestore ──────────────────────────────────────────
   String _studentName = '';
   String _programme = '';
   String _year = '';
   String _semester = '';
+  String _academicStatus = 'NOT BLOCKED';
   int _totalSubjects = 0;
   int _totalCreditHours = 0;
 
@@ -62,6 +65,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
           _programme = data['programme'] ?? '';
           _year = data['year']?.toString() ?? '';
           _semester = data['semester'] ?? '';
+          _academicStatus = data['status'] ?? 'NOT BLOCKED';
         });
       }
 
@@ -112,8 +116,26 @@ class _StudentDashboardState extends State<StudentDashboard> {
     }
   }
 
+  // ── Intercept Verification Logic Handler ─────────────────────────────────
+  bool _checkAccessAllowed() {
+    if (_academicStatus.trim().toUpperCase() == 'BLOCKED') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Please settle your student fees before allowed access'),
+          backgroundColor: Colors.redAccent,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return false; // Intercept transaction event
+    }
+    return true; // Access granted
+  }
+
   // ── Navigate ke StudentOR ────────────────────────────────────────────────
   void _goToCourseRegistration() {
+    if (!_checkAccessAllowed()) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -131,6 +153,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   // ── Navigate ke RegisteredCoursePage ────────────────────────────────────
   void _goToRegisteredCourse() {
+    if (!_checkAccessAllowed()) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -180,12 +204,39 @@ class _StudentDashboardState extends State<StudentDashboard> {
               ),
               accountName: const Text('Student Portal',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              accountEmail: Text('@student.umpsa.edu.my'),
+              accountEmail: Text('${widget.studentID}@student.umpsa.edu.my'),
             ),
             ListTile(
               leading: const Icon(Icons.dashboard, color: Color(0xFF11A06E)),
               title: const Text('Main Home Dashboard'),
               onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.app_registration, color: Color(0xFF11A06E)),
+              title: const Text('Course Registration'),
+              onTap: () {
+                Navigator.pop(context);
+                _goToCourseRegistration(); // 👈 Enforces gatekeeper routing inside the sidebar panel as well
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.book_online, color: Color(0xFF11A06E)),
+              title: const Text('My Courses'),
+              onTap: () {
+                Navigator.pop(context);
+                if (_checkAccessAllowed()) {
+                  // If unblocked, trigger registration target list logic destination here
+                }
+              },
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.workspace_premium, color: Color(0xFF11A06E)),
+              title: const Text('Co-curriculum'),
+              onTap: () {
+                Navigator.pop(context);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.account_balance_wallet,
@@ -196,7 +247,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => StuFinanceDashboard(loggedInStudentMatricId: widget.studentID)),
+                      builder: (context) => StuFinanceDashboard(
+                          loggedInStudentMatricId: widget.studentID)),
                 );
               },
             ),
@@ -248,7 +300,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ── Header ───────────────────────────────────────────────────────────────
+  // --- Header ───────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Container(
       decoration: const BoxDecoration(
@@ -264,11 +316,9 @@ class _StudentDashboardState extends State<StudentDashboard> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              // Locate her custom header menu trigger button and update the command:
               IconButton(
                 icon: const Icon(Icons.menu, color: Colors.white, size: 28),
                 onPressed: () {
-                  // 👈 THIS SCRIPT TELLS FLUTTER TO TRIGGER THE HIDDEN DRAWER TO SLIDE OPEN DYNAMICALLY!
                   _scaffoldKey.currentState?.openDrawer();
                 },
               ),
@@ -312,7 +362,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ── Profile Card ─────────────────────────────────────────────────────────
+  // --- Profile Card ─────────────────────────────────────────────────────────
   Widget _buildProfileCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -329,7 +379,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
       ),
       child: Row(
         children: [
-          // Avatar initials
           Container(
             width: 52,
             height: 52,
@@ -349,41 +398,58 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _studentName,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A2E),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _studentName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A2E),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                '${widget.studentID} · Year $_year',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.grey.shade500,
+                const SizedBox(height: 3),
+                Text(
+                  '${widget.studentID} · Year $_year',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _semester,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.grey.shade500,
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _semester,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    Text(
+                      _academicStatus,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _academicStatus.trim().toUpperCase() == 'BLOCKED'
+                            ? Colors.red
+                            : Colors.green,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ── Stats Row ────────────────────────────────────────────────────────────
+  // --- Stats Row ────────────────────────────────────────────────────────────
   Widget _buildStatsRow() {
     return Row(
       children: [
@@ -440,9 +506,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ── OR Session Card ──────────────────────────────────────────────────────
-  // ✅ Status & period diambil dari ORController.activeSession,
-  // isActive dikira auto dari tarikh+masa (bukan field statik dalam Firestore)
+  // --- OR Session Card ──────────────────────────────────────────────────────
   Widget _buildORSessionCard() {
     return AnimatedBuilder(
       animation: _orController,
@@ -489,7 +553,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      // ✅ Active / Upcoming / Inactive ikut session sebenar
                       isActive
                           ? 'Active'
                           : (session?.statusLabel ?? 'Inactive'),
@@ -535,7 +598,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   ),
                 ),
               const SizedBox(height: 12),
-              // ✅ Button "Registered course" — InkWell ripple, tiada warna statik
               SizedBox(
                 width: double.infinity,
                 child: Material(
@@ -548,16 +610,16 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFCCCCCC)),
+                        border: Border.all(color: const Color(0xFF1AAFA0)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Center(
                         child: Text(
                           'Registered course',
                           style: TextStyle(
-                            color: Color(0xFF1A1A2E),
+                            color: Color(0xFF0D8C7F),
                             fontSize: 13.5,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -572,7 +634,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ── Menu Card ────────────────────────────────────────────────────────────
+  // --- Menu Card ────────────────────────────────────────────────────────────
   Widget _buildMenuCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -604,14 +666,18 @@ class _StudentDashboardState extends State<StudentDashboard> {
               Expanded(
                 child: _buildMenuButton(
                   label: 'Course Registration',
-                  onTap: _goToCourseRegistration,
+                  onTap: _goToCourseRegistration, // Enforced restriction check
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _buildMenuButton(
                   label: 'My Courses',
-                  onTap: () {},
+                  onTap: () {
+                    if (_checkAccessAllowed()) {
+                      // Intercept click: trigger target page code block here when unblocked
+                    }
+                  },
                 ),
               ),
             ],
@@ -633,7 +699,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => StuFinanceDashboard(loggedInStudentMatricId: widget.studentID)),
+                          builder: (context) => StuFinanceDashboard(
+                              loggedInStudentMatricId: widget.studentID)),
                     );
                   },
                 ),
@@ -645,8 +712,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ✅ Menu button — semua start neutral (grey), tukar warna sekejap
-  // bila ditekan melalui InkWell ripple/highlight (bukan warna statik tetap)
   Widget _buildMenuButton({
     required String label,
     required VoidCallback onTap,

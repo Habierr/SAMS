@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 // Module Imports
+// ignore: unused_import
+import '../../domain/sams_financial_model.dart';
 import '../../provider/sams_financial_controller.dart';
 import 'payment_successful.dart';
 import 'payment_unsuccessful.dart';
@@ -328,18 +330,23 @@ class _StuPaymentState extends State<StuPayment> {
                       children: [
                         const SizedBox(
                           width: 120,
-                          child: Text(
-                            'Payment\nMethod',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              'Payment\nMethod',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Radio<String?>(
                                     value: "FPX",
@@ -350,11 +357,17 @@ class _StuPaymentState extends State<StuPayment> {
                                       }
                                     },
                                   ),
-                                  const Text(
-                                    'FPX\n(Internet Banking)',
-                                    style: TextStyle(fontSize: 12),
+                                  const Expanded(
+                                    child: Text(
+                                      'FPX (Internet Banking)',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
                                   ),
-                                  const SizedBox(width: 16),
+                                ],
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
                                   Radio<String?>(
                                     value: "VISA",
                                     groupValue: _paymentMethod,
@@ -364,9 +377,11 @@ class _StuPaymentState extends State<StuPayment> {
                                       }
                                     },
                                   ),
-                                  const Text(
-                                    'VISA\n(Credit/Debit)',
-                                    style: TextStyle(fontSize: 12),
+                                  const Expanded(
+                                    child: Text(
+                                      'VISA (Credit/Debit)',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
                                   ),
                                 ],
                               ),
