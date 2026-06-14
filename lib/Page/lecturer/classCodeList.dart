@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sams/lecturer/lecturer_dashboard.dart';
-import 'package:sams/lecturer/attendanceReport.dart';
+import 'package:sams/Page/lecturer/lecturer_dashboard.dart';
+import 'package:sams/Page/lecturer/attendanceReport.dart';
 
 class ClassCodeList extends StatelessWidget {
   final String lecturerName;
