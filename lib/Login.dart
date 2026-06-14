@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Page/Faculty_reg/Student/StudentDashboard.dart';
 import 'Page/Faculty_reg/RegistrarDashboard.dart';
+import 'Page/Finance/treasury_dashboard.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -68,6 +69,9 @@ class _LoginState extends State<Login> {
               destination = StudentDashboard(
                 studentID: userId,
               );
+              break;
+            case 'treasury':
+              destination = const TreasuryDashboard();
               break;
             default:
               _showSnackBar('Role not recognized: $dbRole', isError: true);

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'Provider/ORController.dart';
+import 'Provider/sams_financial_controller.dart';
 import 'firebase_options.dart';
-import 'Login.dart';
+import 'login.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ORController()),
+        ChangeNotifierProvider(create: (_) => SAMSFinancialController()),
       ],
       child: MaterialApp(
         title: 'Faculty Registrar - SAMS',
