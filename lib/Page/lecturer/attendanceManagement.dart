@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sams/lecturer/lecturer_dashboard.dart';
+import 'package:sams/Page/lecturer/lecturer_dashboard.dart';
 
 class AttendanceManagement extends StatelessWidget {
   final String lecturerName;
