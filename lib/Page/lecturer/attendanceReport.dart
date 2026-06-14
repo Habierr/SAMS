@@ -7,7 +7,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-import 'package:sams/lecturer/lecturer_dashboard.dart';
+import 'package:sams/Page/lecturer/lecturer_dashboard.dart';
 
 class AttendanceReport extends StatelessWidget {
   final String lecturerName;
