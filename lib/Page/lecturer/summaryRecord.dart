@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sams/lecturer/attendanceReport.dart';
+import 'package:sams/Page/lecturer/attendanceReport.dart';
 
 class SummaryRecord extends StatefulWidget {
   final String lecturerName;
