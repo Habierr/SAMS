@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sams/student/attendanceCheckIn.dart';
-import 'package:sams/student/classCodeEntry.dart';
-import 'package:sams/student/fillAttendance.dart';
-import 'package:sams/student/student_dashboard.dart';
+import 'package:sams/Page/student/attendanceCheckIn.dart';
+import 'package:sams/Page/student/classCodeEntry.dart';
+import 'package:sams/Page/student/fillAttendance.dart';
+import 'package:sams/Page/student/student_dashboard.dart';
 
 class AttendanceList extends StatelessWidget {
   final String studentName;
