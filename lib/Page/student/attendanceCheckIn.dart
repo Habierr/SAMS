@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:sams/student/student_dashboard.dart';
-import 'package:sams/student/attendanceList.dart';
+import 'package:sams/Page/student/student_dashboard.dart';
+import 'package:sams/Page/student/attendanceList.dart';
 
 class AttendanceCheckIn extends StatelessWidget {
   final String studentName;
