@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'Page/Faculty_reg/Student/StudentDashboard.dart';
+import 'Page/student/StudentDashboard.dart';
 import 'Page/Faculty_reg/RegistrarDashboard.dart';
 import 'Page/Finance/treasury_dashboard.dart';
 
