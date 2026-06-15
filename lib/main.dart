@@ -12,6 +12,8 @@ import 'package:sams/Page/lecturer/classCodeList.dart';
 import 'package:sams/Page/student/student_dashboard.dart';
 import 'package:sams/Page/Faculty_reg/RegistrarDashboard.dart';
 import 'package:sams/Page/pusat_adab/pusat_dashboard.dart';
+import 'package:sams/Page/Finance/treasury_dashboard.dart';
+import 'package:sams/Page/lecturer/attendanceRecord.dart';
 
 import 'Provider/ORController.dart';
 import 'Provider/sams_financial_controller.dart';
@@ -41,7 +43,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SAMSFinancialController()),
       ],
       child: MaterialApp(
-        title: 'Faculty Registrar - SAMS',
+        title: 'sams - SAMS',
         debugShowCheckedModeBanner: false,
         home: const Login(),
         routes: {

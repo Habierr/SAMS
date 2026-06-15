@@ -1,267 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ReviewCurriculumClaims extends StatelessWidget {
-  const ReviewCurriculumClaims({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: _buildAppBar(context),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(14),
-            topRight: Radius.circular(14),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('curriculum_claims')
-                .snapshots(),
-            builder: (context, snapshot) {
-              int pending = 0;
-              int approved = 0;
-              int rejected = 0;
-
-              if (snapshot.hasData) {
-                for (var doc in snapshot.data!.docs) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final status =
-                      data['status']?.toString().toUpperCase() ?? 'PENDING';
-
-                  if (status == 'PENDING') {
-                    pending++;
-                  } else if (status == 'APPROVED') {
-                    approved++;
-                  } else if (status == 'REJECTED') {
-                    rejected++;
-                  }
-                }
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Approval details',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  StatusCard(
-                    number: pending.toString(),
-                    label: 'PENDING',
-                    color: const Color(0xFFFFFF66),
-                    icon: Icons.hourglass_empty,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ClaimListByStatusPage(
-                            status: 'PENDING',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  StatusCard(
-                    number: approved.toString(),
-                    label: 'APPROVED',
-                    color: const Color(0xFF6DDB66),
-                    icon: Icons.check_circle_outline,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ClaimListByStatusPage(
-                            status: 'APPROVED',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  StatusCard(
-                    number: rejected.toString(),
-                    label: 'REJECTED',
-                    color: const Color(0xFFFF4E55),
-                    icon: Icons.cancel_outlined,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ClaimListByStatusPage(
-                            status: 'REJECTED',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  PreferredSize _buildAppBar(BuildContext context) {
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(130),
-      child: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: const Padding(
-          padding: EdgeInsets.only(top: 10),
-          child: Text(
-            'REVIEW CURRICULUM\nCLAIMS',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Image.asset(
-              'assets/logo_umpsa.png',
-              width: 55,
-              height: 55,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ],
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF003EA1),
-                Color(0xFF4A69D6),
-                Color(0xFF8FA3F0),
-              ],
-              begin: Alignment.bottomLeft,
-              end: Alignment.topRight,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class StatusCard extends StatelessWidget {
-  final String number;
-  final String label;
-  final Color color;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const StatusCard({
-    super.key,
-    required this.number,
-    required this.label,
-    required this.color,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: double.infinity,
-        height: 130,
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    number,
-                    style: const TextStyle(
-                      fontSize: 42,
-                      color: Color(0xFF0047CC),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      color: Color(0xFF0047CC),
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 78,
-              height: 78,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.28),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 48,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class ClaimListByStatusPage extends StatelessWidget {
   final String status;
 
@@ -301,14 +40,9 @@ class ClaimListByStatusPage extends StatelessWidget {
                   : status == 'APPROVED'
                   ? 'Approved Claims'
                   : 'Rejected Claims',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 20),
-
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
@@ -321,9 +55,7 @@ class ClaimListByStatusPage extends StatelessWidget {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(
-                      child: Text('No $status claims found'),
-                    );
+                    return Center(child: Text('No $status claims found'));
                   }
 
                   final claims = snapshot.data!.docs;
@@ -355,7 +87,6 @@ class ClaimListByStatusPage extends StatelessWidget {
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ),
-
                             Column(
                               children: [
                                 Container(
@@ -371,23 +102,20 @@ class ClaimListByStatusPage extends StatelessWidget {
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                 ),
-
                                 const SizedBox(height: 8),
-
                                 SizedBox(
                                   width: 90,
                                   height: 35,
                                   child: ElevatedButton(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                      const Color(0xFF8B8CF0),
+                                      backgroundColor: const Color(0xFF8B8CF0),
                                       padding: EdgeInsets.zero,
                                     ),
                                     onPressed: () {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) =>
+                                          builder: (_) =>
                                               PusatAdabClaimDetailsPage(
                                                 docId: doc.id,
                                                 claimData: data,
@@ -463,72 +191,38 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
             children: [
               const Text(
                 'Claim Details',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-
               const SizedBox(height: 30),
-
               Text(
                 'Matric Number : $studentId',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
-
               const Divider(height: 30, thickness: 1),
-
               Text(
                 'Activity Name: $activityName',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
-
               const SizedBox(height: 14),
-
               Text(
                 'Date : $activityDate',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
-
               const SizedBox(height: 14),
-
               Text(
                 'Hours: $duration hours',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
-
               const Divider(height: 32, thickness: 1),
-
               const Text(
                 'Description :',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
-
               Text(
                 description,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
               ),
-
               const SizedBox(height: 22),
-
               SizedBox(
                 width: double.infinity,
                 height: 45,
@@ -550,22 +244,14 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                       borderRadius: BorderRadius.zero,
                     ),
                   ),
-                  icon: const Icon(
-                    Icons.inventory_2,
-                    color: Colors.white,
-                  ),
+                  icon: const Icon(Icons.inventory_2, color: Colors.white),
                   label: const Text(
                     'View Document',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ),
               ),
-
               const SizedBox(height: 45),
-
               if (status == 'PENDING')
                 Row(
                   children: [
@@ -573,9 +259,7 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                       child: SizedBox(
                         height: 45,
                         child: ElevatedButton(
-                          onPressed: () {
-                            approveClaim(context);
-                          },
+                          onPressed: () => approveClaim(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6DDB66),
                             shape: RoundedRectangleBorder(
@@ -589,16 +273,12 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 25),
-
                     Expanded(
                       child: SizedBox(
                         height: 45,
                         child: ElevatedButton(
-                          onPressed: () {
-                            showRejectDialog(context);
-                          },
+                          onPressed: () => showRejectDialog(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF4E55),
                             shape: RoundedRectangleBorder(
@@ -614,7 +294,6 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-
               if (status == 'APPROVED')
                 Container(
                   width: double.infinity,
@@ -634,7 +313,6 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
               if (status == 'REJECTED')
                 Container(
                   width: double.infinity,
@@ -687,9 +365,7 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
       barrierDismissible: false,
       builder: (dialogContext) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(25, 25, 25, 22),
             child: Column(
@@ -698,9 +374,7 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                 Align(
                   alignment: Alignment.topRight,
                   child: GestureDetector(
-                    onTap: () {
-                      Navigator.pop(dialogContext);
-                    },
+                    onTap: () => Navigator.pop(dialogContext),
                     child: Container(
                       width: 38,
                       height: 38,
@@ -708,34 +382,22 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                         color: Colors.red,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 30,
-                      ),
+                      child: const Icon(Icons.close, color: Colors.white, size: 30),
                     ),
                   ),
                 ),
-
                 const Icon(
                   Icons.warning_amber_rounded,
                   color: Colors.yellow,
                   size: 70,
                 ),
-
                 const SizedBox(height: 12),
-
                 const Text(
                   'Please provide a reason\nfor rejection.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-
                 const SizedBox(height: 15),
-
                 TextField(
                   controller: reasonController,
                   maxLines: 4,
@@ -749,9 +411,7 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 22),
-
                 SizedBox(
                   width: 110,
                   height: 38,
@@ -815,9 +475,7 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
       barrierDismissible: false,
       builder: (dialogContext) {
         return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(24, 35, 24, 25),
             child: Column(
@@ -837,15 +495,9 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 48,
-                  ),
+                  child: Icon(icon, color: Colors.white, size: 48),
                 ),
-
                 const SizedBox(height: 25),
-
                 Text(
                   message,
                   textAlign: TextAlign.center,
@@ -855,9 +507,7 @@ class PusatAdabClaimDetailsPage extends StatelessWidget {
                     color: Color(0xFF1F2A44),
                   ),
                 ),
-
                 const SizedBox(height: 25),
-
                 SizedBox(
                   width: 115,
                   height: 38,
@@ -900,9 +550,7 @@ PreferredSize _buildBlueAppBar(BuildContext context) {
       automaticallyImplyLeading: false,
       leading: IconButton(
         icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-        onPressed: () {
-          Navigator.pop(context);
-        },
+        onPressed: () => Navigator.pop(context),
       ),
       title: const Text(
         'REVIEW CURRICULUM\nCLAIMS',
