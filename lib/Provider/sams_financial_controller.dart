@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../Domain/sams_financial_model.dart';
+import '../domain/sams_financial_model.dart';
 
 class SAMSFinancialController extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

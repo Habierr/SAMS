@@ -42,7 +42,6 @@ class AttendanceCheckIn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -75,7 +74,6 @@ class AttendanceCheckIn extends StatelessWidget {
                 ),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Dashboard'),
@@ -85,7 +83,7 @@ class AttendanceCheckIn extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => StudentDashboard(
                       studentName: studentName,
-                      studentId: studentId,
+                      studentID: studentId,
                       year: 'Year 3',
                       semester: 'Sem 2 2025/2026',
                     ),
@@ -93,10 +91,8 @@ class AttendanceCheckIn extends StatelessWidget {
                 );
               },
             ),
-
             const Spacer(),
             const Divider(),
-
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -110,23 +106,20 @@ class AttendanceCheckIn extends StatelessWidget {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
-                      (route) => false,
+                  (route) => false,
                 );
               },
             ),
-
             const SizedBox(height: 15),
           ],
         ),
       ),
-
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(
@@ -139,7 +132,6 @@ class AttendanceCheckIn extends StatelessWidget {
               },
             ),
           ),
-
           title: const Text(
             'STUDENT ACADEMIC\nMANAGEMENT',
             textAlign: TextAlign.center,
@@ -150,9 +142,7 @@ class AttendanceCheckIn extends StatelessWidget {
               height: 1.1,
             ),
           ),
-
           centerTitle: true,
-
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -163,7 +153,6 @@ class AttendanceCheckIn extends StatelessWidget {
               ),
             ),
           ],
-
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -179,7 +168,6 @@ class AttendanceCheckIn extends StatelessWidget {
           ),
         ),
       ),
-
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(16, 30, 16, 20),
@@ -201,9 +189,7 @@ class AttendanceCheckIn extends StatelessWidget {
                 color: Color(0xFF111B4D),
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Center(
               child: Text(
                 'My Courses',
@@ -214,9 +200,7 @@ class AttendanceCheckIn extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: getRegisteredSubjects(),
@@ -243,7 +227,7 @@ class AttendanceCheckIn extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     itemCount: courses.length,
                     gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 18,
                       mainAxisSpacing: 26,
@@ -273,8 +257,8 @@ class AttendanceCheckIn extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF7C4DFF)
-                                    .withOpacity(0.18),
+                                color:
+                                    const Color(0xFF7C4DFF).withOpacity(0.18),
                                 blurRadius: 7,
                                 offset: const Offset(0, 4),
                               ),
@@ -283,7 +267,6 @@ class AttendanceCheckIn extends StatelessWidget {
                           child: Column(
                             children: [
                               const SizedBox(height: 14),
-
                               Image.asset(
                                 'assets/books.png',
                                 width: 70,
@@ -297,9 +280,7 @@ class AttendanceCheckIn extends StatelessWidget {
                                   );
                                 },
                               ),
-
                               const SizedBox(height: 8),
-
                               Text(
                                 course['code'],
                                 style: const TextStyle(
@@ -308,9 +289,7 @@ class AttendanceCheckIn extends StatelessWidget {
                                   color: Color(0xFF111B4D),
                                 ),
                               ),
-
                               const SizedBox(height: 5),
-
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(

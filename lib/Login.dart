@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Page/student/student_dashboard.dart';
 import 'Page/Faculty_reg/RegistrarDashboard.dart';
 import 'Page/Finance/treasury_dashboard.dart';
+import 'Page/pusat_adab/pusat_dashboard.dart';
+import 'Page/lecturer/lecturer_dashboard.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -66,15 +68,25 @@ class _LoginState extends State<Login> {
                   const RegistrarDashboard(); // ← TERUS navigate, jangan loadData dulu
               break;
             case 'student':
-              destination = const StudentDashboard(
-                studentName: '',
-                studentID: '',
-                year: '',
-                semester: '',
+              destination = StudentDashboard(
+                studentID: userId,
+                studentName: userData?['name'] ?? '',
+                year: userData?['year']?.toString() ?? '',
+                semester: userData?['semester'] ?? '',
               );
               break;
             case 'treasury':
               destination = const TreasuryDashboard();
+              break;
+            case 'lecturer':
+              destination = LecturerDashboard(
+                lecturerName: userData?['name'] ?? '',
+                lecturerId: userId,
+              );
+              break;
+
+            case 'pusat_adab':
+              destination = const PusatDashboard();
               break;
             default:
               _showSnackBar('Role not recognized: $dbRole', isError: true);
@@ -172,9 +184,7 @@ class _LoginState extends State<Login> {
               padding: const EdgeInsets.fromLTRB(28, 32, 28, 24),
               decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -208,8 +218,12 @@ class _LoginState extends State<Login> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 10, 31, 217),
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            10,
+                            31,
+                            217,
+                          ),
                           foregroundColor: Colors.white,
                           elevation: 2,
                           shape: RoundedRectangleBorder(
@@ -304,8 +318,10 @@ class _LoginState extends State<Login> {
                 )
               : null,
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );

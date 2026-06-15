@@ -22,7 +22,6 @@ class AttendanceList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -55,7 +54,6 @@ class AttendanceList extends StatelessWidget {
                 ),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Dashboard'),
@@ -65,7 +63,7 @@ class AttendanceList extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => StudentDashboard(
                       studentName: studentName,
-                      studentId: studentId,
+                      studentID: studentId,
                       year: 'Year 3',
                       semester: 'Sem 2',
                     ),
@@ -73,7 +71,6 @@ class AttendanceList extends StatelessWidget {
                 );
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.menu_book),
               title: const Text('My Courses'),
@@ -89,10 +86,8 @@ class AttendanceList extends StatelessWidget {
                 );
               },
             ),
-
             const Spacer(),
             const Divider(),
-
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -106,23 +101,20 @@ class AttendanceList extends StatelessWidget {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
-                      (route) => false,
+                  (route) => false,
                 );
               },
             ),
-
             const SizedBox(height: 15),
           ],
         ),
       ),
-
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, color: Colors.white, size: 26),
@@ -131,7 +123,6 @@ class AttendanceList extends StatelessWidget {
               },
             ),
           ),
-
           title: const Text(
             'STUDENT ACADEMIC\nMANAGEMENT',
             textAlign: TextAlign.center,
@@ -142,9 +133,7 @@ class AttendanceList extends StatelessWidget {
               height: 1.1,
             ),
           ),
-
           centerTitle: true,
-
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -155,7 +144,6 @@ class AttendanceList extends StatelessWidget {
               ),
             ),
           ],
-
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -171,7 +159,6 @@ class AttendanceList extends StatelessWidget {
           ),
         ),
       ),
-
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(24, 45, 24, 20),
@@ -193,9 +180,7 @@ class AttendanceList extends StatelessWidget {
                 color: Color(0xFF111B4D),
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               subName,
               textAlign: TextAlign.center,
@@ -205,9 +190,7 @@ class AttendanceList extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 45),
-
             _menuButton(
               text: 'Add New Attendance',
               onTap: () {
@@ -224,9 +207,7 @@ class AttendanceList extends StatelessWidget {
                 );
               },
             ),
-
             const SizedBox(height: 28),
-
             _menuButton(
               text: 'Attendance List',
               onTap: () {

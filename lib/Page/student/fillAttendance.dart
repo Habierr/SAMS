@@ -21,7 +21,6 @@ class FillAttendance extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -52,7 +51,6 @@ class FillAttendance extends StatelessWidget {
                 ),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Dashboard'),
@@ -62,7 +60,7 @@ class FillAttendance extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => StudentDashboard(
                       studentName: studentName,
-                      studentId: studentId,
+                      studentID: studentId,
                       year: 'Year 3',
                       semester: 'Sem 2',
                     ),
@@ -70,7 +68,6 @@ class FillAttendance extends StatelessWidget {
                 );
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.menu_book),
               title: const Text('My Courses'),
@@ -86,10 +83,8 @@ class FillAttendance extends StatelessWidget {
                 );
               },
             ),
-
             const Spacer(),
             const Divider(),
-
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -103,23 +98,20 @@ class FillAttendance extends StatelessWidget {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
-                      (route) => false,
+                  (route) => false,
                 );
               },
             ),
-
             const SizedBox(height: 15),
           ],
         ),
       ),
-
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, color: Colors.white, size: 26),
@@ -128,7 +120,6 @@ class FillAttendance extends StatelessWidget {
               },
             ),
           ),
-
           title: const Text(
             'STUDENT ACADEMIC\nMANAGEMENT',
             textAlign: TextAlign.center,
@@ -139,9 +130,7 @@ class FillAttendance extends StatelessWidget {
               height: 1.1,
             ),
           ),
-
           centerTitle: true,
-
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -152,7 +141,6 @@ class FillAttendance extends StatelessWidget {
               ),
             ),
           ],
-
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -166,7 +154,6 @@ class FillAttendance extends StatelessWidget {
           ),
         ),
       ),
-
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 35, 20, 20),
@@ -187,9 +174,7 @@ class FillAttendance extends StatelessWidget {
                 color: Color(0xFF111B4D),
               ),
             ),
-
             const SizedBox(height: 28),
-
             Text(
               subCode,
               textAlign: TextAlign.center,
@@ -199,9 +184,7 @@ class FillAttendance extends StatelessWidget {
                 color: Color(0xFF111B4D),
               ),
             ),
-
             const SizedBox(height: 6),
-
             Text(
               subName,
               textAlign: TextAlign.center,
@@ -211,9 +194,7 @@ class FillAttendance extends StatelessWidget {
                 color: Colors.black,
               ),
             ),
-
             const SizedBox(height: 25),
-
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
@@ -246,7 +227,7 @@ class FillAttendance extends StatelessWidget {
                     itemCount: records.length,
                     itemBuilder: (context, index) {
                       final data =
-                      records[index].data() as Map<String, dynamic>;
+                          records[index].data() as Map<String, dynamic>;
 
                       final status = data['attendanceStatus'] ?? '';
 
@@ -286,7 +267,6 @@ class FillAttendance extends StatelessWidget {
                                 ],
                               ),
                             ),
-
                             Container(
                               width: 85,
                               height: 28,

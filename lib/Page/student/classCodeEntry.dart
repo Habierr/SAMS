@@ -58,7 +58,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
 
   Future<String> generateAttendanceId() async {
     final counterRef =
-    FirebaseFirestore.instance.collection('counters').doc('attendance');
+        FirebaseFirestore.instance.collection('counters').doc('attendance');
 
     return FirebaseFirestore.instance.runTransaction((transaction) async {
       final snapshot = await transaction.get(counterRef);
@@ -162,7 +162,8 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
 
       if (duplicateCheck.docs.isNotEmpty) {
         setState(() => isLoading = false);
-        await showErrorDialog('Attendance already recorded for this class code.');
+        await showErrorDialog(
+            'Attendance already recorded for this class code.');
         return;
       }
 
@@ -457,7 +458,6 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -488,7 +488,6 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 ),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Dashboard'),
@@ -498,7 +497,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                   MaterialPageRoute(
                     builder: (context) => StudentDashboard(
                       studentName: widget.studentName,
-                      studentId: widget.studentId,
+                      studentID: widget.studentId,
                       year: 'Year 3',
                       semester: 'Sem 2',
                     ),
@@ -506,7 +505,6 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 );
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.menu_book),
               title: const Text('My Courses'),
@@ -522,10 +520,8 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 );
               },
             ),
-
             const Spacer(),
             const Divider(),
-
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -539,30 +535,26 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
-                      (route) => false,
+                  (route) => false,
                 );
               },
             ),
-
             const SizedBox(height: 15),
           ],
         ),
       ),
-
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, color: Colors.white, size: 26),
               onPressed: () => Scaffold.of(context).openDrawer(),
             ),
           ),
-
           title: const Text(
             'STUDENT ACADEMIC\nMANAGEMENT',
             textAlign: TextAlign.center,
@@ -574,7 +566,6 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
             ),
           ),
           centerTitle: true,
-
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -585,7 +576,6 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
               ),
             ),
           ],
-
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -599,7 +589,6 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
           ),
         ),
       ),
-
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(22, 35, 22, 20),
@@ -620,9 +609,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 color: Color(0xFF111B4D),
               ),
             ),
-
             const SizedBox(height: 28),
-
             Text(
               widget.subName,
               textAlign: TextAlign.center,
@@ -632,9 +619,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 color: Color(0xFF111B4D),
               ),
             ),
-
             const SizedBox(height: 35),
-
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -646,9 +631,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 ),
               ),
             ),
-
             const SizedBox(height: 10),
-
             TextField(
               controller: _classCodeController,
               textAlign: TextAlign.center,
@@ -659,9 +642,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 border: InputBorder.none,
               ),
             ),
-
             const SizedBox(height: 28),
-
             SizedBox(
               width: 170,
               height: 42,
@@ -676,12 +657,12 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
                 child: isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
-                  'Submit',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                        'Submit',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
           ],

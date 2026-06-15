@@ -7,8 +7,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../Provider/ORController.dart';
-import '../../../Domain/ORModel.dart';
+import '../../Provider/ORController.dart';
+import '../../Domain/ORModel.dart';
 
 class EditCourse extends StatefulWidget {
   final Subject subject;
