@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'Page/student/StudentDashboard.dart';
+import 'Page/student/student_dashboard.dart';
 import 'Page/Faculty_reg/RegistrarDashboard.dart';
 import 'Page/Finance/treasury_dashboard.dart';
 
@@ -66,8 +66,11 @@ class _LoginState extends State<Login> {
                   const RegistrarDashboard(); // ← TERUS navigate, jangan loadData dulu
               break;
             case 'student':
-              destination = StudentDashboard(
-                studentID: userId,
+              destination = const StudentDashboard(
+                studentName: '',
+                studentID: '',
+                year: '',
+                semester: '',
               );
               break;
             case 'treasury':

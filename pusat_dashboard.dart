@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sams/login.dart';
-import 'package:sams/pusat_adab/review_curriculum_claims.dart';
+import 'package:sams/Login.dart';
+import 'package:sams/Page/pusat_adab/review_curriculum_claims.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class PusatDashboard extends StatefulWidget {
@@ -53,15 +53,13 @@ class _PusatDashboardState extends State<PusatDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    final selectedKey =
-    _selectedDay == null ? null : getDateKey(_selectedDay!);
+    final selectedKey = _selectedDay == null ? null : getDateKey(_selectedDay!);
 
     final selectedNotes =
-    selectedKey == null ? <String>[] : notes[selectedKey] ?? <String>[];
+        selectedKey == null ? <String>[] : notes[selectedKey] ?? <String>[];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -100,7 +98,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
                 ),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.dashboard),
               title: const Text('Dashboard'),
@@ -108,7 +105,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
                 Navigator.pop(context);
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.assignment_turned_in),
               title: const Text('Review Curriculum Claims'),
@@ -122,10 +118,8 @@ class _PusatDashboardState extends State<PusatDashboard> {
                 );
               },
             ),
-
             const Spacer(),
             const Divider(),
-
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -141,23 +135,20 @@ class _PusatDashboardState extends State<PusatDashboard> {
                   MaterialPageRoute(
                     builder: (context) => const Login(),
                   ),
-                      (route) => false,
+                  (route) => false,
                 );
               },
             ),
-
             const SizedBox(height: 20),
           ],
         ),
       ),
-
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(140),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, color: Colors.white, size: 28),
@@ -166,7 +157,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
               },
             ),
           ),
-
           title: const Padding(
             padding: EdgeInsets.only(top: 20),
             child: Text(
@@ -182,7 +172,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
             ),
           ),
           centerTitle: true,
-
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -194,7 +183,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
               ),
             ),
           ],
-
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -210,7 +198,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
           ),
         ),
       ),
-
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -221,7 +208,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
             topRight: Radius.circular(24),
           ),
         ),
-
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -229,7 +215,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 10),
-
                 const Text(
                   'Welcome ,',
                   style: TextStyle(
@@ -238,9 +223,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     color: Color(0xFF003EA1),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 const Text(
                   'Dashboard',
                   style: TextStyle(
@@ -249,9 +232,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     color: Colors.black87,
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -294,9 +275,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(15),
@@ -314,9 +293,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 const Text(
                   'Add Notes / Activity',
                   style: TextStyle(
@@ -324,9 +301,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 TextField(
                   controller: noteController,
                   maxLines: 3,
@@ -346,9 +321,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 SizedBox(
                   width: double.infinity,
                   height: 45,
@@ -370,9 +343,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
                 const Text(
                   'Notes',
                   style: TextStyle(
@@ -380,9 +351,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 if (_selectedDay == null)
                   const Text(
                     'Please select a date to view notes.',

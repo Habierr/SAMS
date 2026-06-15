@@ -3,13 +3,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
-import 'login.dart';
+import 'Login.dart';
 
 import 'package:sams/Page/lecturer/lecturer_dashboard.dart';
 import 'package:sams/Page/lecturer/attendanceManagement.dart';
 import 'package:sams/Page/lecturer/generateClassCode.dart';
 import 'package:sams/Page/lecturer/classCodeList.dart';
 import 'package:sams/Page/student/student_dashboard.dart';
+import 'package:sams/Page/Faculty_reg/RegistrarDashboard.dart';
+import 'package:sams/Page/pusat_adab/pusat_dashboard.dart';
 
 import 'Provider/ORController.dart';
 import 'Provider/sams_financial_controller.dart';
@@ -44,7 +46,7 @@ class MyApp extends StatelessWidget {
         home: const Login(),
         routes: {
           '/login': (context) => const Login(),
-          '/faculty_dashboard': (context) => const FacultyDashboard(),
+          '/faculty_dashboard': (context) => const RegistrarDashboard(),
           '/lecturer_dashboard': (context) => const LecturerDashboard(
                 lecturerName: '',
                 lecturerId: '',
@@ -52,12 +54,11 @@ class MyApp extends StatelessWidget {
           '/pusat_dashboard': (context) => const PusatDashboard(),
           '/student_dashboard': (context) => const StudentDashboard(
                 studentName: '',
-                studentId: '',
+                studentID: '',
                 year: '',
                 semester: '',
               ),
           '/treasury_dashboard': (context) => const TreasuryDashboard(),
-
           '/attendanceManagement': (context) {
             final args = _getArgs(context);
 
@@ -75,7 +76,6 @@ class MyApp extends StatelessWidget {
               semester: args['semester'] ?? '',
             );
           },
-
           '/generateClassCode': (context) {
             final args = _getArgs(context);
 
@@ -93,7 +93,6 @@ class MyApp extends StatelessWidget {
               semester: args['semester'] ?? '',
             );
           },
-
           '/classCodeList': (context) {
             final args = _getArgs(context);
 
@@ -111,7 +110,6 @@ class MyApp extends StatelessWidget {
               semester: args['semester'] ?? '',
             );
           },
-
           '/attendanceRecord': (context) {
             final args = _getArgs(context);
 
