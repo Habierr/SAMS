@@ -5,6 +5,7 @@ import 'SubjectManagement.dart';
 import 'SubjectOffering.dart';
 import 'SetSchedule.dart';
 import 'ViewEnrollment.dart';
+import '../../../login.dart';
 
 class RegistrarDashboard extends StatefulWidget {
   const RegistrarDashboard({super.key});
@@ -14,6 +15,7 @@ class RegistrarDashboard extends StatefulWidget {
 }
 
 class _RegistrarDashboardState extends State<RegistrarDashboard> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _pressedIndex = -1;
 
   @override
@@ -28,7 +30,104 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: const Color(0xFFF0F4F8),
+      drawer: Drawer(
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                color: Color(
+                    0xFF1A5F7A), // Matches her dashboard signature layout profile color
+              ),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.badge_outlined,
+                    color: Color(0xFF1A5F7A), size: 36),
+              ),
+              accountName: const Text(
+                'Faculty Registrar',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.white),
+              ),
+              accountEmail: const Text(
+                'registrar@university.edu.my',
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.dashboard_outlined,
+                  color: Color(0xFF1A5F7A)),
+              title: const Text('Dashboard Home'),
+              onTap: () =>
+                  Navigator.pop(context), // Closes side bar drawer overlay
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment_outlined,
+                  color: Color(0xFF1A5F7A)),
+              title: const Text('Subject Management'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const SubjectManagement()));
+              },
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.people_outline, color: Color(0xFF1A5F7A)),
+              title: const Text('View Enrollment'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const ViewEnrollment()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.local_offer_outlined,
+                  color: Color(0xFF1A5F7A)),
+              title: const Text('Subject Offering'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SubjectOffering()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.calendar_today_outlined,
+                  color: Color(0xFF1A5F7A)),
+              title: const Text('OR Session Schedule'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const SetSchedule()));
+              },
+            ),
+            const Spacer(),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.logout_outlined, color: Colors.red),
+              title: const Text(
+                'Logout',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+              onTap: () {
+                // Clear state scopes completely and return user safely back to Login screen bounds
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Login()),
+                  (route) => false,
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
       appBar: AppBar(
         title: const Text(
           'STUDENT ACADEMIC\nMANAGEMENT',
@@ -46,14 +145,16 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.menu, size: 24, color: Colors.white),
-          onPressed: () {},
+          onPressed: () {
+            _scaffoldKey.currentState?.openDrawer();
+          },
           splashRadius: 20,
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: Image.asset(
-              'assets/logo_university.png',
+              'assets/logo_umpsa.png',
               height: 36,
               width: 36,
               errorBuilder: (context, error, stackTrace) {

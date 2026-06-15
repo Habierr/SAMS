@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../Provider/ORController.dart';
-import 'StudentOR.dart';
-import 'RegisteredCourse.dart';
-import 'attendanceCheckIn.dart';
-import 'my_activity_claims_view.dart';
+import '../OR/StudentOR.dart';
+import '../OR/RegisteredCourse.dart';
+import '../Attendance/attendanceCheckIn.dart';
+import '../Curriculum/my_activity_claims_view.dart';
 import '../Finance/stu_finance_dashboard.dart';
 import '../../login.dart';
 
@@ -35,6 +35,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
   String _programme = '';
   late String _year;
   late String _semester;
+  String _academicStatus =
+      'NOT BLOCKED'; // Dynamic ledger gatekeeping status tracker
   int _totalSubjects = 0;
   int _totalCreditHours = 0;
 
@@ -104,6 +106,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ['semester', 'Semester', 'sem'],
             widget.semester,
           );
+          _academicStatus = data['status'] ??
+              'NOT BLOCKED'; // 👈 Dynamically tracks database state values
         });
       } else {
         debugPrint('STUDENT DOC NOT FOUND for studentID: ${widget.studentID}');
@@ -156,8 +160,26 @@ class _StudentDashboardState extends State<StudentDashboard> {
     }
   }
 
+  // ── Intercept Verification Logic Helper ─────────────────────────────────
+  bool _isAccessBlocked() {
+    if (_academicStatus.trim().toUpperCase() == 'BLOCKED') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Please settle your student fees before allowed access'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return true; // Stop execution
+    }
+    return false; // Access granted
+  }
+
   // ── Navigate ke StudentOR ────────────────────────────────────────────────
   void _goToCourseRegistration() {
+    if (_isAccessBlocked()) return; // Halts route if blocked
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -175,6 +197,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   // ── Navigate ke RegisteredCoursePage ("Registered course") ─────────────
   void _goToRegisteredCourse() {
+    if (_isAccessBlocked()) return; // Halts route if blocked
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -193,6 +217,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
   // ── Navigate ke AttendanceCheckIn ("My Courses") ────────────────────────
   void _goToMyCourses() {
+    if (_isAccessBlocked()) return; // Halts route if blocked
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -259,7 +285,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
               title: const Text('My Courses'),
               onTap: () {
                 Navigator.pop(context);
-                _goToMyCourses();
+                _goToMyCourses(); // 👈 Checked
               },
             ),
             ListTile(
@@ -268,7 +294,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
               title: const Text('Course Registration'),
               onTap: () {
                 Navigator.pop(context);
-                _goToCourseRegistration();
+                _goToCourseRegistration(); // 👈 Checked
               },
             ),
             ListTile(
@@ -379,21 +405,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
               Container(
                 width: 44,
                 height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    'https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Universiti_Malaysia_Pahang_logo.svg/200px-Universiti_Malaysia_Pahang_logo.svg.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.school,
-                      color: Color(0xFF1AAFA0),
-                      size: 26,
-                    ),
-                  ),
+                child: Image.asset(
+                  'assets/logo_umpsa.png',
+                  fit: BoxFit.contain,
                 ),
               ),
             ],
@@ -403,7 +420,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ── Profile Card ─────────────────────────────────────────────────────────
+  // --- Profile Card ─────────────────────────────────────────────────────────
   Widget _buildProfileCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -439,41 +456,57 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           ),
           const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _studentName.isEmpty ? '(No name)' : _studentName,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A2E),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _studentName.isEmpty ? '(No name)' : _studentName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A2E),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                '${widget.studentID} · Year $_year',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.grey.shade500,
+                const SizedBox(height: 3),
+                Text(
+                  '${widget.studentID} · Year $_year',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: Colors.grey.shade500,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _semester,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: Colors.grey.shade500,
+                const SizedBox(height: 2),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _semester,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                    if (_academicStatus.trim().toUpperCase() == 'BLOCKED')
+                      const Text(
+                        'BLOCKED',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ── Stats Row ────────────────────────────────────────────────────────────
+  // --- Stats Row ────────────────────────────────────────────────────────────
   Widget _buildStatsRow() {
     return Row(
       children: [
@@ -530,9 +563,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ── OR Session Card ──────────────────────────────────────────────────────
-  // ✅ Status & period diambil dari ORController.activeSession,
-  // isActive dikira auto dari tarikh+masa (bukan field statik dalam Firestore)
+  // --- OR Session Card ──────────────────────────────────────────────────────
   Widget _buildORSessionCard() {
     return AnimatedBuilder(
       animation: _orController,
@@ -624,13 +655,12 @@ class _StudentDashboardState extends State<StudentDashboard> {
                   ),
                 ),
               const SizedBox(height: 12),
-              // ✅ Button "Registered course" -> RegisteredCourse
               SizedBox(
                 width: double.infinity,
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: _goToRegisteredCourse,
+                    onTap: _goToRegisteredCourse, // 👈 Checked
                     borderRadius: BorderRadius.circular(8),
                     splashColor: const Color(0xFF1AAFA0).withOpacity(0.15),
                     highlightColor: const Color(0xFF1AAFA0).withOpacity(0.08),
@@ -661,7 +691,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ── Menu Card ────────────────────────────────────────────────────────────
+  // --- Menu Card ────────────────────────────────────────────────────────────
   Widget _buildMenuCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -693,14 +723,14 @@ class _StudentDashboardState extends State<StudentDashboard> {
               Expanded(
                 child: _buildMenuButton(
                   label: 'Course Registration',
-                  onTap: _goToCourseRegistration,
+                  onTap: _goToCourseRegistration, // 👈 Checked
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _buildMenuButton(
                   label: 'My Courses',
-                  onTap: _goToMyCourses,
+                  onTap: _goToMyCourses, // 👈 Checked
                 ),
               ),
             ],
@@ -735,8 +765,6 @@ class _StudentDashboardState extends State<StudentDashboard> {
     );
   }
 
-  // ✅ Menu button — semua start neutral (grey), tukar warna sekejap
-  // bila ditekan melalui InkWell ripple/highlight (bukan warna statik tetap)
   Widget _buildMenuButton({
     required String label,
     required VoidCallback onTap,

@@ -5,15 +5,15 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'Login.dart';
 
-import 'package:sams/Page/lecturer/lecturer_dashboard.dart';
-import 'package:sams/Page/lecturer/attendanceManagement.dart';
-import 'package:sams/Page/lecturer/generateClassCode.dart';
-import 'package:sams/Page/lecturer/classCodeList.dart';
+import 'package:sams/Page/Attendance/lecturer_dashboard.dart';
+import 'package:sams/Page/Attendance/attendanceManagement.dart';
+import 'package:sams/Page/Attendance/generateClassCode.dart';
+import 'package:sams/Page/Attendance/classCodeList.dart';
 import 'package:sams/Page/student/student_dashboard.dart';
-import 'package:sams/Page/Faculty_reg/RegistrarDashboard.dart';
-import 'package:sams/Page/pusat_adab/pusat_dashboard.dart';
+import 'package:sams/Page/OR/RegistrarDashboard.dart';
+import 'package:sams/Page/Curriculum/pusat_dashboard.dart';
 import 'package:sams/Page/Finance/treasury_dashboard.dart';
-import 'package:sams/Page/lecturer/attendanceRecord.dart';
+import 'package:sams/Page/Attendance/attendanceRecord.dart';
 
 import 'Provider/ORController.dart';
 import 'Provider/sams_financial_controller.dart';

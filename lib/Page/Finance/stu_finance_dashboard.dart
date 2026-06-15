@@ -306,8 +306,8 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => StuPayment(
-                      passedStudentMatricId: matricId), // 👈 Passes ID to form
+                  builder: (context) =>
+                      StuPayment(passedStudentMatricId: matricId),
                 ),
               );
             },

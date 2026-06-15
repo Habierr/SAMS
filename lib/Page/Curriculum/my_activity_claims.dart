@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:sams/Page/student/curriculum_activity_claim_view.dart';
+import 'package:sams/Page/Curriculum/curriculum_activity_claim_view.dart';
 
 class MyActivityClaims extends StatelessWidget {
   const MyActivityClaims({super.key});

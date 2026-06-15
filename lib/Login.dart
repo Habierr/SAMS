@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'Page/student/student_dashboard.dart';
-import 'Page/Faculty_reg/RegistrarDashboard.dart';
+import 'Page/OR/RegistrarDashboard.dart';
 import 'Page/Finance/treasury_dashboard.dart';
-import 'Page/pusat_adab/pusat_dashboard.dart';
-import 'Page/lecturer/lecturer_dashboard.dart';
+import 'Page/Curriculum/pusat_dashboard.dart';
+import 'Page/Attendance/lecturer_dashboard.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -147,17 +147,17 @@ class _LoginState extends State<Login> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // ── SEAMLESS TRANSPARENT LOGO CONTAINER ────────────────
                     Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
+                      width:
+                          90, // Adjusted slightly for excellent visibility without the border
+                      height: 90,
+                      decoration: const BoxDecoration(
+                        color: Colors.transparent,
                       ),
-                      child: const Icon(
-                        Icons.school,
-                        color: Colors.white,
-                        size: 44,
+                      child: Image.asset(
+                        'assets/logo_umpsa.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 16),

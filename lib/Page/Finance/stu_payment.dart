@@ -5,12 +5,14 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-// Module Imports
+// Clean Architecture Module Imports matching SDD System Maps
+import '../../domain/sams_financial_model.dart';
 import '../../provider/sams_financial_controller.dart';
 import 'payment_successful.dart';
 import 'payment_unsuccessful.dart';
 
 class StuPayment extends StatefulWidget {
+  // 👈 Bound name parameter contract explicitly to clear your dashboard compilation error
   final String passedStudentMatricId;
 
   const StuPayment({super.key, required this.passedStudentMatricId});
@@ -79,9 +81,9 @@ class _StuPaymentState extends State<StuPayment> {
   Future<void> _processPaymentTransaction(
     Map<String, dynamic> studentProfile,
   ) async {
+    final String currentStudentMatricId = widget.passedStudentMatricId;
     final String amountInputText = _totalController.text.trim();
     final double? parsedAmount = double.tryParse(amountInputText);
-    final String currentStudentMatricId = widget.passedStudentMatricId;
 
     // If input is non-numeric, null, or zero, route immediately to the Unsuccessful page file
     if (parsedAmount == null || parsedAmount <= 0) {
@@ -106,7 +108,8 @@ class _StuPaymentState extends State<StuPayment> {
       double accumulatedPastPayments = 0.0;
       for (var doc in previousReceiptsSnapshot.docs) {
         final rData = doc.data();
-        if (rData['semester'] == 'SEM 2 25/26') {
+        if (rData['semester'] == 'SEM 2 25/26' ||
+            rData['semester'] == 'SEM II 25/26') {
           accumulatedPastPayments +=
               double.tryParse(rData['totalReceived'].toString()) ?? 0.0;
         }
@@ -135,10 +138,20 @@ class _StuPaymentState extends State<StuPayment> {
       );
 
       if (isSuccess) {
+        // 👈 AUTOMATIC UNBLOCKING CONTROLLER INTERACTION PIPELINE
+        // If the balance drops to zero or lower, automatically toggle account access back to NOT BLOCKED
+        if (remainingNewBalance <= 0) {
+          await financialController.updateStudentStatus(
+              currentStudentMatricId, 'NOT BLOCKED');
+          debugPrint(
+              "Payment Complete. Balance settled for $currentStudentMatricId. Access status updated.");
+        }
+
         // 3. Trigger notification copy template
         await _sendEmailReceipt(
           studentName: studentProfile['name'] ?? 'Student',
-          studentEmail: studentProfile['email'] ?? 'surayahisyam00@gmail.com',
+          studentEmail:
+              studentProfile['email'] ?? 'student@student.umpsa.edu.my',
           receiptNo: generatedReceiptNo,
           totalPaid: parsedAmount.toStringAsFixed(2),
           payMethod: _paymentMethod,
@@ -271,7 +284,7 @@ class _StuPaymentState extends State<StuPayment> {
                   _buildLockedFormRow('Name', nameStr),
                   _buildLockedFormRow(
                     'IC Number',
-                    data['icNumber'] ?? '080714-06-0132',
+                    data['icNumber'] ?? data['studentIC'] ?? 'N/A',
                   ),
                   _buildLockedFormRow('Receiver', 'UMPSA'),
 
@@ -320,7 +333,7 @@ class _StuPaymentState extends State<StuPayment> {
                     ),
                   ),
 
-                  // Radio buttons row
+                  // Radio buttons row - Fixed layout to prevent right-overflow on physical phone devices
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Row(
@@ -328,18 +341,23 @@ class _StuPaymentState extends State<StuPayment> {
                       children: [
                         const SizedBox(
                           width: 120,
-                          child: Text(
-                            'Payment\nMethod',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              'Payment\nMethod',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ),
                         Expanded(
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Radio<String?>(
                                     value: "FPX",
@@ -350,11 +368,17 @@ class _StuPaymentState extends State<StuPayment> {
                                       }
                                     },
                                   ),
-                                  const Text(
-                                    'FPX\n(Internet Banking)',
-                                    style: TextStyle(fontSize: 12),
+                                  const Expanded(
+                                    child: Text(
+                                      'FPX (Internet Banking)',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
                                   ),
-                                  const SizedBox(width: 16),
+                                ],
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
                                   Radio<String?>(
                                     value: "VISA",
                                     groupValue: _paymentMethod,
@@ -364,9 +388,11 @@ class _StuPaymentState extends State<StuPayment> {
                                       }
                                     },
                                   ),
-                                  const Text(
-                                    'VISA\n(Credit/Debit)',
-                                    style: TextStyle(fontSize: 12),
+                                  const Expanded(
+                                    child: Text(
+                                      'VISA (Credit/Debit)',
+                                      style: TextStyle(fontSize: 13),
+                                    ),
                                   ),
                                 ],
                               ),
