@@ -41,6 +41,7 @@ class _GenerateClassCodeState extends State<GenerateClassCode> {
   String generatedCode = '';
   bool isLoading = false;
 
+  // Generate random 6-character class code
   String generateRandomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = Random();
@@ -66,6 +67,7 @@ class _GenerateClassCodeState extends State<GenerateClassCode> {
     }
   }
 
+  // Copy generated class code to clipboard
   Future<void> copyGeneratedCode() async {
     if (generatedCode.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
