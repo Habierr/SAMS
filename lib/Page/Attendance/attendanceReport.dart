@@ -10,6 +10,7 @@ import 'package:printing/printing.dart';
 import 'package:sams/Page/Attendance/lecturer_dashboard.dart';
 
 class AttendanceReport extends StatelessWidget {
+  // Lecturer and attendance report information
   final String lecturerName;
   final String lecturerId;
   final String subCode;
@@ -31,6 +32,7 @@ class AttendanceReport extends StatelessWidget {
     required this.classSession,
   });
 
+  // Retrieve attendance report summary from Firestore
   Future<QuerySnapshot> getReportData() {
     return FirebaseFirestore.instance
         .collection('attendanceReport')
@@ -41,6 +43,7 @@ class AttendanceReport extends StatelessWidget {
         .get();
   }
 
+  // Retrieve student attendance records from Firestore
   Future<QuerySnapshot> getAttendanceRecords() {
     return FirebaseFirestore.instance
         .collection('attendance')
@@ -51,6 +54,7 @@ class AttendanceReport extends StatelessWidget {
         .get();
   }
 
+  // Generate attendance report in PDF format
   Future<Uint8List> generatePdf(
     Map<String, dynamic> report,
     List<QueryDocumentSnapshot> records,
@@ -100,6 +104,8 @@ class AttendanceReport extends StatelessWidget {
                 ),
               ),
               pw.SizedBox(height: 18),
+
+              // Display report details
               pw.Container(
                 width: double.infinity,
                 padding: const pw.EdgeInsets.all(14),
@@ -132,6 +138,8 @@ class AttendanceReport extends StatelessWidget {
                 ),
               ),
               pw.SizedBox(height: 16),
+
+              // Display attendance summary
               pw.Row(
                 children: [
                   _pdfSummaryCard(
@@ -166,6 +174,8 @@ class AttendanceReport extends StatelessWidget {
                 ),
               ),
               pw.SizedBox(height: 8),
+
+              // Display student attendance list in table
               pw.Table.fromTextArray(
                 border: pw.TableBorder.all(color: PdfColors.black),
                 headerDecoration: const pw.BoxDecoration(
@@ -214,6 +224,7 @@ class AttendanceReport extends StatelessWidget {
     return pdf.save();
   }
 
+  // Reusable PDF information row
   pw.Widget _pdfInfo(String label, String value) {
     return pw.Padding(
       padding: const pw.EdgeInsets.only(bottom: 5),
@@ -234,6 +245,7 @@ class AttendanceReport extends StatelessWidget {
     );
   }
 
+  // Reusable PDF summary card
   pw.Widget _pdfSummaryCard(
     String title,
     String value,
@@ -276,6 +288,8 @@ class AttendanceReport extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+
+      // Lecturer navigation drawer
       drawer: Drawer(
         child: Column(
           children: [
@@ -346,6 +360,8 @@ class AttendanceReport extends StatelessWidget {
           ],
         ),
       ),
+
+      // SAMS application header
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
@@ -400,6 +416,8 @@ class AttendanceReport extends StatelessWidget {
           ),
         ),
       ),
+
+      // Load report and attendance data together
       body: FutureBuilder<List<QuerySnapshot>>(
         future: Future.wait([
           getReportData(),
@@ -459,6 +477,8 @@ class AttendanceReport extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Display report information
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(15),
@@ -497,6 +517,8 @@ class AttendanceReport extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Display total students, present and absent summary
                   Row(
                     children: [
                       _summaryCard(
@@ -531,6 +553,8 @@ class AttendanceReport extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
+
+                  // Display student attendance records in table
                   Table(
                     border: TableBorder.all(color: Colors.black87),
                     columnWidths: const {
@@ -569,6 +593,8 @@ class AttendanceReport extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 28),
+
+                  // Download attendance report as PDF
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -610,6 +636,7 @@ class AttendanceReport extends StatelessWidget {
     );
   }
 
+  // Reusable row for report details
   Widget _info(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 7),
@@ -641,6 +668,7 @@ class AttendanceReport extends StatelessWidget {
     );
   }
 
+  // Reusable summary card widget
   Widget _summaryCard({
     required String title,
     required String value,
@@ -679,6 +707,7 @@ class AttendanceReport extends StatelessWidget {
   }
 }
 
+// Reusable table cell for attendance list
 class _TableCell extends StatelessWidget {
   final String text;
   final bool bold;
