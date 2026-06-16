@@ -1,4 +1,6 @@
 class SAMSAttendanceModel {
+
+  // Attendance record attributes
   final String attendanceID;
   final String studentID;
   final String studentName;
@@ -25,6 +27,7 @@ class SAMSAttendanceModel {
     required this.attendanceStatus,
   });
 
+  // Create model object from Firestore data
   factory SAMSAttendanceModel.fromMap(Map<String, dynamic> data) {
     return SAMSAttendanceModel(
       attendanceID: data['attendanceID'] ?? '',
@@ -41,6 +44,7 @@ class SAMSAttendanceModel {
     );
   }
 
+  // Convert model object into Firestore format
   Map<String, dynamic> toMap() {
     return {
       'attendanceID': attendanceID,
