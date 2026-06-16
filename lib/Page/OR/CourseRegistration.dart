@@ -1,10 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// FILE: lib/Page/OR/CourseRegistrationPage.dart
-// Boundary Class — PACK108-SAMS-2026 (CourseRegistration)
-// Ref: SDD Section 4.1.8 CourseRegistration
-// ✅ Lab/Tutorial sections kini filter mengikut prefix lecture yang dipilih
-// ─────────────────────────────────────────────────────────────────────────────
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Provider/ORController.dart';
@@ -12,8 +5,7 @@ import '../../Domain/ORModel.dart';
 
 class CourseRegistration extends StatefulWidget {
   final Subject subject;
-  final List<OfferingRegistration>
-      offerings; // semua sections untuk subject ini
+  final List<OfferingRegistration> offerings;
 
   const CourseRegistration({
     super.key,
@@ -26,19 +18,14 @@ class CourseRegistration extends StatefulWidget {
 }
 
 class _CourseRegistrationState extends State<CourseRegistration> {
-  // Section yang dipilih student
   OfferingRegistration? _selectedLecture;
   OfferingRegistration? _selectedSecondary; // Lab atau Tutorial
 
   bool _isRegistering = false;
 
-  // ── Group offerings mengikut classType ───────────────────────────────────
-
   List<OfferingRegistration> get _lectureSections =>
       widget.offerings.where((o) => o.classType == 'Lecture').toList();
 
-  // ✅ Secondary sections — filter mengikut prefix lecture yang DIPILIH.
-  // Contoh: lecture '01' dipilih → hanya '01A', '01B' ditunjukkan (bukan '02A').
   List<OfferingRegistration> get _secondarySections {
     if (_selectedLecture == null) return [];
     final lectSectNo = _selectedLecture!.sectNo;
@@ -51,7 +38,6 @@ class _CourseRegistrationState extends State<CourseRegistration> {
 
   bool get _hasSecondary => _secondarySections.isNotEmpty;
 
-  // ── Label untuk secondary section (Lab / Tutorial) ───────────────────────
   String get _secondaryLabel {
     if (_secondarySections.isEmpty) return '';
     return _secondarySections.first.classType == 'Lab'
@@ -62,11 +48,10 @@ class _CourseRegistrationState extends State<CourseRegistration> {
   @override
   void initState() {
     super.initState();
-    // Auto-select first available (not full) lecture section
+
     _selectedLecture = _lectureSections.where((o) => !o.isFull).firstOrNull ??
         (_lectureSections.isNotEmpty ? _lectureSections.first : null);
 
-    // ✅ Auto-select secondary berdasarkan lecture yang terpilih
     _autoSelectSecondary();
   }
 
@@ -95,10 +80,8 @@ class _CourseRegistrationState extends State<CourseRegistration> {
     setState(() => _isRegistering = true);
     final ctrl = context.read<ORController>();
 
-    // Daftar lecture section
     String? error = await ctrl.registerSubject(offering: _selectedLecture!);
 
-    // Daftar lab/tutorial section jika ada dan lecture berjaya
     if (error == null && _hasSecondary && _selectedSecondary != null) {
       error = await ctrl.registerSubject(offering: _selectedSecondary!);
     }
@@ -113,8 +96,6 @@ class _CourseRegistrationState extends State<CourseRegistration> {
       Navigator.pop(context);
     }
   }
-
-  // ── cancelRegister() ──────────────────────────────────────────────────────
 
   void _onCancel() => Navigator.pop(context);
 
@@ -145,8 +126,6 @@ class _CourseRegistrationState extends State<CourseRegistration> {
                 _buildSubjectInfoCard(),
                 const SizedBox(height: 16),
                 _buildLectureSectionCard(),
-                // ✅ Lab/Tutorial card sentiasa ditunjukkan SELEPAS lecture,
-                // dan akan auto-refresh ikut lecture yang dipilih
                 if (_hasSecondary) ...[
                   const SizedBox(height: 16),
                   _buildSecondarySectionCard(),
@@ -272,8 +251,7 @@ class _CourseRegistrationState extends State<CourseRegistration> {
                     ? null
                     : () => setState(() {
                           _selectedLecture = o;
-                          // ✅ Lecture berubah → refresh secondary selection
-                          // supaya hanya tunjuk lab/tutorial dengan prefix sama
+
                           _autoSelectSecondary();
                         }),
               ),
@@ -291,8 +269,6 @@ class _CourseRegistrationState extends State<CourseRegistration> {
 
   Widget _buildSecondarySectionCard() {
     return _SectionCard(
-      // ✅ Tunjuk section lecture yang dipilih dalam title, contoh
-      // "Lab Section (for Lecture 01)"
       title: _selectedLecture != null
           ? '$_secondaryLabel  ·  Lecture ${_selectedLecture!.sectNo}'
           : _secondaryLabel,
@@ -375,11 +351,6 @@ class _CourseRegistrationState extends State<CourseRegistration> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REUSABLE WIDGETS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Card putih dengan tajuk teal
 class _SectionCard extends StatelessWidget {
   final String title;
   final Widget child;
@@ -422,7 +393,6 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-/// Row info: "Code        BCS2344"
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
@@ -461,7 +431,6 @@ class _RowDivider extends StatelessWidget {
       );
 }
 
-/// Satu row section dengan radio button
 class _OfferingTile extends StatelessWidget {
   final OfferingRegistration offering;
   final bool isSelected;

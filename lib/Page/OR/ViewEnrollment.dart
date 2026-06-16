@@ -113,8 +113,6 @@ class _ViewEnrollmentState extends State<ViewEnrollment> {
             }
           }
 
-          // ✅ Total enrolled dikira dari Lab/Tutorial sahaja,
-          // konsisten dengan Section rate card di bawah
           final totalEnrolled = secondaryOfferings.fold<int>(
               0, (sum, e) => sum + e.value.enrolled);
           final openSections = secondaryOfferings
@@ -354,8 +352,6 @@ class _ViewEnrollmentState extends State<ViewEnrollment> {
                                                 vertical: 11),
                                             child: Row(
                                               children: [
-                                                // ✅ Simple: "BCS2344 - 01A"
-                                                // Merah kalau full
                                                 Expanded(
                                                   child: Text(
                                                     '${o.subCode} - ${o.sectNo}',

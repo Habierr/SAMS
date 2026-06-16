@@ -42,8 +42,6 @@ class _AddSubjectState extends State<AddSubject> {
     );
 
     try {
-      // Add via controller — assumes addSubject method exists
-      // If not, call FirebaseService directly
       final controller = Provider.of<ORController>(context, listen: false);
       await controller.addSubject(newSubject);
 
@@ -72,7 +70,6 @@ class _AddSubjectState extends State<AddSubject> {
     }
   }
 
-  // ── Styled label + text field ──────────────────────────────────────────────
   Widget _buildField({
     required TextEditingController controller,
     required String label,

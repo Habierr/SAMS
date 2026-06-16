@@ -32,7 +32,6 @@ class _SetScheduleState extends State<SetSchedule> {
     'Year 2 students': 'Year 2',
   };
 
-  // ✅ Format semester konsisten dengan SubjectManagement
   final List<String> _semesterOptions = [
     'Sem 1 25/26',
     'Sem 2 25/26',
@@ -74,7 +73,6 @@ class _SetScheduleState extends State<SetSchedule> {
             'endTime': session.endTime,
             'sessionID': session.sessionID,
             'semester': session.semester,
-            // ✅ Status dikira dari ORSession.statusLabel — bukan simpan dalam map
           };
         });
       }
@@ -96,8 +94,6 @@ class _SetScheduleState extends State<SetSchedule> {
     return DateTime.now();
   }
 
-  // ✅ Kira status terus dari tarikh dan masa.
-  // 'Ended' dianggap sama seperti 'Not set' — badge akan tunjuk 'Set' semula
   String _getStatus(String group) {
     final data = _schedules[group]!;
     if (!data.containsKey('startDate')) return 'Not set';
@@ -142,7 +138,6 @@ class _SetScheduleState extends State<SetSchedule> {
       }
     }
 
-    // ✅ Ended → treat as Not set, supaya badge jadi 'Set' semula
     return rawStatus == 'Ended' ? 'Not set' : rawStatus;
   }
 
@@ -213,13 +208,11 @@ class _SetScheduleState extends State<SetSchedule> {
 
     setState(() {
       _expandedGroup = group;
-      // ✅ Semester — guna yang sedia ada, atau default 'Sem 2 25/26'
       _tempSemester = existing['semester'] ?? _semesterOptions[1];
       if (status == 'Not set') {
-        // ✅ Belum set ATAU session lama dah tamat — clear tarikh, set baru
         _tempStartDate = null;
         _tempEndDate = null;
-        _tempStartTime = existing['startTime']; // kekal masa sebagai default
+        _tempStartTime = existing['startTime'];
         _tempEndTime = existing['endTime'];
       } else {
         _tempStartDate = existing['startDate'];
@@ -251,13 +244,11 @@ class _SetScheduleState extends State<SetSchedule> {
     final sessionID = existing['sessionID'] ??
         'SES-$studentYear-${DateTime.now().millisecondsSinceEpoch}';
 
-    // ✅ Guna semester yang dipilih dalam form (konsisten dengan SubjectManagement)
     final selectedSemester = _tempSemester ?? _semesterOptions[1];
 
     final session = ORSession(
       sessionID: sessionID,
       semester: selectedSemester,
-      // ✅ Tiada isActive — auto-calculate dari tarikh masa
       studentYear: studentYear,
       startDate: _parseDisplayDate(_tempStartDate!),
       endDate: _parseDisplayDate(_tempEndDate!),
@@ -304,7 +295,6 @@ class _SetScheduleState extends State<SetSchedule> {
     }
   }
 
-  // ✅ Badge tunjuk status auto — Active/Upcoming/Set (kalau Ended atau belum set)
   Widget _buildBadge(String group) {
     final status = _getStatus(group);
 
@@ -330,7 +320,6 @@ class _SetScheduleState extends State<SetSchedule> {
       );
     }
 
-    // Warna ikut status — hanya Active atau Upcoming sampai sini
     Color bgColor;
     Widget? leadingIcon;
 
@@ -555,7 +544,6 @@ class _SetScheduleState extends State<SetSchedule> {
                             color: Color(0xFF1A5F7A),
                           ),
                         ),
-                        // ✅ Info — OR auto-active berdasarkan masa
                         Padding(
                           padding: const EdgeInsets.only(top: 4, bottom: 8),
                           child: Text(
@@ -587,7 +575,6 @@ class _SetScheduleState extends State<SetSchedule> {
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
-                                          // ✅ Tunjuk tarikh, masa & semester kalau dah set
                                           if (_schedules[group]!
                                               .containsKey('startDate'))
                                             Text(
@@ -654,7 +641,7 @@ class _SetScheduleState extends State<SetSchedule> {
                               ),
                             ),
                           ),
-                          // ✅ Semester dropdown — konsisten dengan SubjectManagement
+
                           const Text(
                             'Semester',
                             style: TextStyle(

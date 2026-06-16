@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// FILE: lib/Provider/ORController.dart
-// Controller Class — PACK111-SAMS-2026
-// ─────────────────────────────────────────────────────────────────────────────
-
 import 'package:flutter/material.dart';
 import '../Domain/ORModel.dart';
 import '../Services/FirebaseService.dart';
@@ -50,8 +45,6 @@ class ORController extends ChangeNotifier {
     }
   }
 
-  // ✅ Filter ikut semester sahaja — semua offerings dalam semester yang sama
-  // available untuk semua year groups, tak kira sessionID OR period
   List<OfferingRegistration> get activeOfferings {
     final session = activeSession;
     if (session == null) return [];
@@ -109,10 +102,6 @@ class ORController extends ChangeNotifier {
       .where((r) => r.isLecture)
       .fold(0, (sum, r) => sum + r.creditHour);
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SDD METHODS
-  // ═══════════════════════════════════════════════════════════════════════════
-
   Future<void> processOR() async => await loadData();
 
   Future<void> updateOR(OfferingRegistration offering, String docId) async {
@@ -136,10 +125,6 @@ class ORController extends ChangeNotifier {
     if (studentID != null) _studentID = studentID;
     if (regisID != null) _regisID = regisID;
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // DATA LOADING
-  // ═══════════════════════════════════════════════════════════════════════════
 
   Future<void> loadData() async {
     _isLoading = true;
@@ -167,11 +152,6 @@ class ORController extends ChangeNotifier {
     }
   }
 
-  // ✅ Ambil SEMUA offerings tanpa filter semester di Firestore-side.
-  // Ini elak masalah mismatch format semester antara or_sessions dan offerings
-  // (contoh: "Sem 2" vs "Sem 2 25/26"). Filtering ikut semester (jika perlu)
-  // dibuat di UI layer (SubjectOffering/ViewEnrollment) menggunakan
-  // controller.offerings terus.
   void _listenToOfferings() {
     _firebaseService.getOfferingsWithIds().listen(
       (offeringsWithIds) {
@@ -210,10 +190,6 @@ class ORController extends ChangeNotifier {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // OFFERING CRUD
-  // ═══════════════════════════════════════════════════════════════════════════
-
   Future<void> addOffering(OfferingRegistration offering) async {
     await _firebaseService.addOffering(offering);
     notifyListeners();
@@ -229,10 +205,6 @@ class ORController extends ChangeNotifier {
     await _firebaseService.deleteOffering(docId);
     notifyListeners();
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SUBJECT CRUD
-  // ═══════════════════════════════════════════════════════════════════════════
 
   Future<void> addSubject(Subject subject) async {
     await _firebaseService.addSubject(subject);
@@ -252,21 +224,10 @@ class ORController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // OR SESSION MANAGEMENT
-  // ═══════════════════════════════════════════════════════════════════════════
-
   Future<void> saveORSession(ORSession session) async {
     await _firebaseService.saveORSession(session);
     await loadData();
   }
-
-  // ✅ activateORSession tidak diperlukan — isActive auto-calculate dari tarikh masa
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // STUDENT REGISTRATION — registerSubject()
-  // ✅ sectID = Firestore doc ID, boleh guna terus untuk incrementEnrolled
-  // ═══════════════════════════════════════════════════════════════════════════
 
   Future<String?> registerSubject({
     required OfferingRegistration offering,
@@ -329,7 +290,7 @@ class ORController extends ChangeNotifier {
       );
 
       await _firebaseService.addStudentRegistration(record);
-      // ✅ offering.sectID = Firestore doc ID — betul dan konsisten dengan SDD
+
       await _firebaseService.incrementEnrolled(offering.sectID);
 
       _errorMessage = null;
@@ -342,11 +303,6 @@ class ORController extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // STUDENT DROP SUBJECT — dropSubject()
-  // ✅ sectID dari registration record boleh guna terus untuk decrementEnrolled
-  // ═══════════════════════════════════════════════════════════════════════════
 
   Future<String?> dropSubject(String subCode) async {
     try {
@@ -362,7 +318,7 @@ class ORController extends ChangeNotifier {
         final sectID = _studentRegistrations[idx].sectID;
 
         await _firebaseService.deleteStudentRegistration(regDocId);
-        // ✅ sectID = Firestore doc ID untuk offerings — boleh guna terus
+
         await _firebaseService.decrementEnrolled(sectID);
       }
       return null;
@@ -371,18 +327,12 @@ class ORController extends ChangeNotifier {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // STUDENT EDIT REGISTRATION — editRegistration()
-  // ✅ sectID = Firestore doc ID — boleh guna terus untuk decrement/increment
-  // ═══════════════════════════════════════════════════════════════════════════
-
   Future<String?> editRegistration({
     required String subCode,
     required String classType,
     required OfferingRegistration newOffering,
   }) async {
     try {
-      // Cari rekod lama dengan trim() + toLowerCase() untuk elak mismatch
       int? existingIdx;
       for (int i = 0; i < _studentRegistrations.length; i++) {
         final r = _studentRegistrations[i];
@@ -420,7 +370,7 @@ class ORController extends ChangeNotifier {
         sectID: newOffering.sectID,
         sessionID: existing.sessionID,
         totalSub: existing.totalSub,
-        regStatus: 'Registered', // Kekal 'Registered' supaya stream masih fetch
+        regStatus: 'Registered',
         regAt: existing.regAt,
         subCode: subCode,
         subName: newOffering.subName,
@@ -436,7 +386,7 @@ class ORController extends ChangeNotifier {
       );
 
       await _firebaseService.updateStudentRegistration(regDocId, updated);
-      // ✅ sectID = Firestore doc ID — guna terus tanpa perlu cari index
+
       await _firebaseService.decrementEnrolled(existing.sectID);
       await _firebaseService.incrementEnrolled(newOffering.sectID);
 
@@ -446,10 +396,6 @@ class ORController extends ChangeNotifier {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // STATISTICS
-  // ═══════════════════════════════════════════════════════════════════════════
-
   Future<int> getTotalEnrolled() async =>
       await _firebaseService.getTotalEnrolled();
 
@@ -458,10 +404,6 @@ class ORController extends ChangeNotifier {
 
   Future<int> getFullOfferings() async =>
       await _firebaseService.getFullOfferings();
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // SAMPLE DATA
-  // ═══════════════════════════════════════════════════════════════════════════
 
   Future<void> initializeData() async {
     await _firebaseService.initializeSampleData();

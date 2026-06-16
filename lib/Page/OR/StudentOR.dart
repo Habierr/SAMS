@@ -40,7 +40,7 @@ class _StudentORState extends State<StudentOR> {
     super.dispose();
   }
 
-  // viewSection() — navigate ke CourseRegistrationPage
+  // viewSection
   void _onViewSubject(
     BuildContext context,
     Subject subject,
@@ -399,10 +399,6 @@ class _StudentORState extends State<StudentOR> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUBJECT TILE — satu row dalam senarai subject
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _SubjectTile extends StatelessWidget {
   final String subCode;

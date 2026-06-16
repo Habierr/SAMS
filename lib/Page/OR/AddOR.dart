@@ -5,7 +5,7 @@ import '../../../Domain/ORModel.dart';
 
 class AddOR extends StatefulWidget {
   final Subject subject;
-  final String semester; // ✅ Semester yang dipilih di SubjectManagement
+  final String semester;
 
   const AddOR({
     super.key,
@@ -33,7 +33,6 @@ class _AddORState extends State<AddOR> {
   final List<String> _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
   final List<String> _classTypes = ['Lecture', 'Tutorial', 'Lab'];
 
-  // ✅ Auto-generate sectID format SEC001, SEC002
   String _generateSectID(List<String> existingDocIds) {
     int max = 0;
     for (final id in existingDocIds) {
@@ -99,7 +98,6 @@ class _AddORState extends State<AddOR> {
 
     final controller = Provider.of<ORController>(context, listen: false);
 
-    // ✅ sectID auto-generate format SEC001
     final sectID = _generateSectID(controller.offeringsDocIds);
 
     final offering = OfferingRegistration(
@@ -116,9 +114,7 @@ class _AddORState extends State<AddOR> {
       startTime: _startTimeController.text,
       endTime: _endTimeController.text,
       venue: _venueController.text.isEmpty ? 'TBA' : _venueController.text,
-      // ✅ Guna semester yang dipilih di SubjectManagement, bukan activeSession
       semester: widget.semester,
-      // session field — boleh kosongkan/letak placeholder, tak digunakan untuk filter
       session: '',
     );
 

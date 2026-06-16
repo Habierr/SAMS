@@ -15,7 +15,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
-  // ─── Auto-generate sectID format SEC001, SEC002 ──────────────────────────
   String _generateSectID(List<String> existingDocIds) {
     int max = 0;
     for (final id in existingDocIds) {
@@ -28,12 +27,10 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     return 'SEC${(max + 1).toString().padLeft(3, '0')}';
   }
 
-  // ─── Group offerings: subCode → lectSectNo → LectureGroup ───────────────
   Map<String, Map<String, _LectureGroup>> _groupOfferings(
       List<OfferingRegistration> offerings, List<String> docIds) {
     final Map<String, Map<String, _LectureGroup>> result = {};
 
-    // Pass 1: Collect lectures
     for (int i = 0; i < offerings.length; i++) {
       final o = offerings[i];
       final id = docIds[i];
@@ -46,7 +43,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
       }
     }
 
-    // Pass 2: Collect Lab/Tutorial — letak bawah lecture prefix matching
     for (int i = 0; i < offerings.length; i++) {
       final o = offerings[i];
       final id = docIds[i];
@@ -79,7 +75,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     return result;
   }
 
-  // ─── Kira jumlah quota semua lab dalam satu lecture group ────────────────
   int _totalSecondaryQuota(_LectureGroup group,
       {String? excludeDocId, int? overrideQuota}) {
     int total = 0;
@@ -95,14 +90,12 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     return total;
   }
 
-  // ─── Suggest quota untuk lab baru ────────────────────────────────────────
   int _suggestQuota(_LectureGroup group, int lectureQuota) {
     final usedQuota = _totalSecondaryQuota(group);
     final remaining = lectureQuota - usedQuota;
     return remaining > 0 ? remaining : 0;
   }
 
-  // ─── Bottom Sheet: Add / Edit ────────────────────────────────────────────
   void _showOfferingForm(
     BuildContext context,
     ORController controller, {
@@ -128,10 +121,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
         TextEditingController(text: isEdit ? offering.lectName : '');
     final venueCtrl = TextEditingController(text: isEdit ? offering.venue : '');
 
-    // Quota logic:
-    // - Lecture: boleh set bebas
-    // - Lab/Tutorial baru: suggest sisa quota
-    // - Lab/Tutorial edit: pre-fill quota sedia ada
     int suggestedQuota = 0;
     if (parentGroup != null && parentGroup.lecture != null) {
       if (isEdit) {
@@ -157,7 +146,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
-          // Kira max quota yang boleh diset untuk lab ini
           int? maxAllowedQuota;
           if (selectedClassType != 'Lecture' && parentGroup?.lecture != null) {
             final lectureQuota = parentGroup!.lecture!.quota;
@@ -268,14 +256,13 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                       color: Color(0xFF1A5F7A), width: 1.5),
                                 ),
                               ),
-                              // Disable class type change bila edit
                               onChanged: isEdit
                                   ? null
                                   : (val) {
                                       if (val != null) {
                                         setModalState(() {
                                           selectedClassType = val;
-                                          // Reset quota bila tukar class type
+
                                           quotaCtrl.clear();
                                         });
                                       }
@@ -294,8 +281,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Quota field
-                      // ✅ Lab/Tutorial: tunjuk max allowed + validate
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -341,7 +326,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                     final val = int.tryParse(v);
                                     if (val == null) return 'Number only';
                                     if (val <= 0) return 'Must be > 0';
-                                    // ✅ Validate: quota lab tak boleh melebihi sisa lecture quota
+
                                     if (selectedClassType != 'Lecture' &&
                                         maxAllowedQuota != null &&
                                         val > maxAllowedQuota) {
@@ -351,7 +336,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                   },
                                 ),
                               ),
-                              // ✅ Info box: tunjuk sisa quota untuk lab
                               if (selectedClassType != 'Lecture' &&
                                   maxAllowedQuota != null) ...[
                                 const SizedBox(width: 10),
@@ -396,8 +380,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                               ],
                             ],
                           ),
-                          // ✅ Info text untuk lab: tunjuk quota lecture dan
-                          // berapa dah dipakai
                           if (selectedClassType != 'Lecture' &&
                               parentGroup?.lecture != null)
                             Padding(
@@ -502,10 +484,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                               onPressed: () async {
                                 if (!formKey.currentState!.validate()) return;
 
-                                // ✅ Tentukan semester:
-                                // 1. Bila edit — guna semester offering sedia ada
-                                // 2. Bila add Lab/Tutorial baru — guna semester dari lecture induk
-                                // 3. Bila add Lecture baru terus dari sini — fallback ke activeSession
                                 String resolvedSemester;
                                 if (isEdit) {
                                   resolvedSemester = offering!.semester;
@@ -841,7 +819,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                 subCode: subCode,
                                 subName: subName,
                                 lectGroups: lectGroups,
-                                // ✅ Edit → navigate ke EditOR (detail form)
                                 onEdit: (offering, docId, group) async {
                                   final result = await Navigator.push(
                                     context,
@@ -854,7 +831,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                   );
                                   if (result == true) controller.loadData();
                                 },
-                                // ✅ Add Lab/Tutorial → guna bottom sheet form
                                 onAddSecondary: (group) => _showOfferingForm(
                                   context,
                                   controller,
@@ -908,9 +884,6 @@ class _SubjectOfferingState extends State<SubjectOffering> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA CLASS
-// ─────────────────────────────────────────────────────────────────────────────
 class _LectureGroup {
   final OfferingRegistration? lecture;
   final String? lectureDocId;
@@ -919,17 +892,12 @@ class _LectureGroup {
 
   _LectureGroup({required this.lecture, required this.lectureDocId});
 
-  // Kira jumlah quota semua secondaries (untuk allocation validation)
   int get totalSecondaryQuota => secondaries.fold(0, (sum, s) => sum + s.quota);
 
-  // Sisa quota yang masih available untuk tambah lab baru
   int get remainingQuota =>
       lecture != null ? lecture!.quota - totalSecondaryQuota : 0;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// WIDGET — Subject Card
-// ─────────────────────────────────────────────────────────────────────────────
 class _SubjectCard extends StatefulWidget {
   final String subCode;
   final String subName;
@@ -1251,8 +1219,6 @@ class _SubjectCardState extends State<_SubjectCard> {
                       ),
                     );
                   }),
-
-                  // ✅ Add Lab/Tutorial button — tunjuk remaining quota
                   if (group.lecture != null && group.remainingQuota > 0)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(40, 4, 12, 8),
@@ -1303,10 +1269,6 @@ class _SubjectCardState extends State<_SubjectCard> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SMALL REUSABLE WIDGETS
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _TypeBadge extends StatelessWidget {
   final String label;

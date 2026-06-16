@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// FILE: lib/Domain/ORModel.dart
-// Entity Class — PACK112-SAMS-2026
-// ─────────────────────────────────────────────────────────────────────────────
-
 class Registrar {
   String regisID;
   String name;
@@ -135,19 +130,14 @@ class OfferingRegistration {
       );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OR SESSION
-// ✅ isActive dikira AUTO dari startDate+startTime hingga endDate+endTime
-// Tidak perlu simpan isActive dalam Firestore — dikira setiap kali dari masa semasa
-// ─────────────────────────────────────────────────────────────────────────────
 class ORSession {
   String sessionID;
   String semester;
   String studentYear;
   DateTime startDate;
   DateTime endDate;
-  String startTime; // format "HH:mm"
-  String endTime; // format "HH:mm"
+  String startTime;
+  String endTime;
 
   ORSession({
     required this.sessionID,
@@ -159,12 +149,9 @@ class ORSession {
     required this.endTime,
   });
 
-  // ✅ Auto-calculate isActive dari tarikh DAN masa semasa
-  // isActive = true bila now >= startDate+startTime DAN now <= endDate+endTime
   bool get isActive {
     final now = DateTime.now();
 
-    // Parse startTime "HH:mm" → gabung dengan startDate
     final startParts = startTime.split(':');
     final endParts = endTime.split(':');
 
@@ -187,7 +174,6 @@ class ORSession {
     return now.isAfter(sessionStart) && now.isBefore(sessionEnd);
   }
 
-  // Status label untuk display
   String get statusLabel {
     final now = DateTime.now();
     final startParts = startTime.split(':');
@@ -240,7 +226,6 @@ class ORSession {
   Map<String, dynamic> toMap() => {
         'sessionID': sessionID,
         'semester': semester,
-        // ✅ Tidak simpan isActive dalam Firestore
         'studentYear': studentYear,
         'startDate': startDate.toIso8601String(),
         'endDate': endDate.toIso8601String(),
@@ -251,7 +236,6 @@ class ORSession {
   factory ORSession.fromMap(Map<String, dynamic> map) => ORSession(
         sessionID: map['sessionID'] ?? '',
         semester: map['semester'] ?? '',
-        // ✅ Ignore isActive dari Firestore — kira sendiri
         studentYear: map['studentYear'] ?? '',
         startDate: DateTime.tryParse(map['startDate'] ?? '') ?? DateTime.now(),
         endDate: DateTime.tryParse(map['endDate'] ?? '') ?? DateTime.now(),

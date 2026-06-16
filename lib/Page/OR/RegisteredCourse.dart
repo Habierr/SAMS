@@ -1,10 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// FILE: lib/Page/OR/RegisteredCourse.dart
-// Boundary Class — PACK109-SAMS-2026 (RegisteredCourse)
-// Ref: SDD Section 4.1.9 RegisteredCourse
-// ✅ "+ Add more subject" sekarang navigate ke StudentOR
-// ─────────────────────────────────────────────────────────────────────────────
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Provider/ORController.dart';
@@ -104,7 +97,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     }
   }
 
-  // ── Edit — navigate ke EditCourse ─────────────────────────────────────────
+  //  Edit
 
   void _onEdit(_SubjectEntry entry) {
     final ctrl = context.read<ORController>();
@@ -118,11 +111,9 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
       faculty: '',
     );
 
-    // Ambil semua offerings untuk subject ini dari cache
     final offerings =
         ctrl.activeOfferings.where((o) => o.subCode == rec.subCode).toList();
 
-    // sectID semasa untuk lecture dan lab/tutorial
     final currentLectSectID = entry.lecture?.sectID ?? '';
     final currentSecSectID = entry.secondary?.sectID ?? '';
 
@@ -142,8 +133,6 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     );
   }
 
-  // ✅ "+ Add more subject" — navigate ke StudentOR (Course Registration list)
-  // guna ORController yang sama supaya state (registrations, offerings) konsisten
   void _onAddMore() {
     final ctrl = context.read<ORController>();
 
@@ -440,10 +429,6 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPER
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _SubjectEntry {
   final String subCode;
   CourseRegistrationRecord? lecture;
@@ -461,10 +446,6 @@ class _SubjectEntry {
   String get subName => lecture?.subName ?? secondary?.subName ?? '';
   String get lectName => lecture?.lectName ?? secondary?.lectName ?? '';
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// REUSABLE WIDGETS
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final String value;

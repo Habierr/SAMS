@@ -1,10 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// FILE: lib/Page/OR/EditCourse.dart
-// Boundary Class — PACK110-SAMS-2026 (EditCourse)
-// Ref: SDD Section 4.1.10 EditCourse
-// ✅ Lab/Tutorial sections kini filter mengikut prefix lecture yang dipilih
-// ─────────────────────────────────────────────────────────────────────────────
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Provider/ORController.dart';
@@ -36,8 +29,6 @@ class _EditCourseState extends State<EditCourse> {
   List<OfferingRegistration> get _lectureSections =>
       widget.offerings.where((o) => o.classType == 'Lecture').toList();
 
-  // ✅ Secondary sections — filter mengikut prefix lecture yang DIPILIH.
-  // Contoh: lecture '01' dipilih → hanya '01A', '01B' ditunjukkan (bukan '02A').
   List<OfferingRegistration> get _secondarySections {
     if (_selectedLecture == null) return [];
     final lectSectNo = _selectedLecture!.sectNo;
@@ -65,12 +56,9 @@ class _EditCourseState extends State<EditCourse> {
       orElse: () => _lectureSections.first,
     );
 
-    // ✅ Selepas lecture diset, cari secondary yang sepadan dengan currentSecSectID
-    // (kalau ada dalam list secondary untuk lecture ni)
     _autoSelectSecondary(preferCurrent: true);
   }
 
-  // ✅ Auto-select secondary berdasarkan lecture yang terpilih
   void _autoSelectSecondary({bool preferCurrent = false}) {
     if (!_hasSecondary) {
       _selectedSecondary = null;
@@ -87,7 +75,6 @@ class _EditCourseState extends State<EditCourse> {
       }
     }
 
-    // Default: pilih yang belum penuh, atau yang pertama
     _selectedSecondary =
         _secondarySections.where((o) => !o.isFull).firstOrNull ??
             _secondarySections.first;
@@ -304,10 +291,7 @@ class _EditCourseState extends State<EditCourse> {
                     ? null
                     : () => setState(() {
                           _selectedLecture = o;
-                          // ✅ Lecture berubah → refresh secondary selection
-                          // supaya hanya tunjuk lab/tutorial dengan prefix sama.
-                          // preferCurrent: false sebab lecture dah ditukar,
-                          // current secondary (lecture lama) tak relevan lagi.
+
                           _autoSelectSecondary(preferCurrent: false);
                         }),
               ),
@@ -323,7 +307,6 @@ class _EditCourseState extends State<EditCourse> {
 
   Widget _buildSecondarySectionCard() {
     return _SectionCard(
-      // ✅ Tunjuk lecture yang dipilih dalam title untuk konteks jelas
       title: _selectedLecture != null
           ? '$_secondaryLabel  ·  Lecture ${_selectedLecture!.sectNo}'
           : _secondaryLabel,
@@ -404,10 +387,6 @@ class _EditCourseState extends State<EditCourse> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// REUSABLE WIDGETS
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final String title;

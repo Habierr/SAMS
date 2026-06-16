@@ -178,8 +178,6 @@ class _SubjectManagementState extends State<SubjectManagement> {
                         return GestureDetector(
                           onTap: () {
                             setState(() {
-                              // ✅ Sekali diklik, terus set (tak boleh unselect)
-                              // sebab AddOR perlukan semester yang valid
                               selectedSemester = semester;
                               searchQuery = '';
                               _searchController.clear();
@@ -231,7 +229,6 @@ class _SubjectManagementState extends State<SubjectManagement> {
                           color: Color(0xFF1A5F7A),
                         ),
                       ),
-                      // ✅ Tunjuk semester yang sedang dipilih
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
@@ -403,7 +400,6 @@ class _SubjectManagementState extends State<SubjectManagement> {
               // Add button
               OutlinedButton(
                 onPressed: () async {
-                  // ✅ Pass selectedSemester ke AddOR
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
