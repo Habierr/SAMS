@@ -92,7 +92,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
           future: FirebaseFirestore.instance
               .collection('users')
               .doc(
-                  currentStudentMatricId) // 👈 Automatically fetches CB23001's document profile
+                  currentStudentMatricId) // Automatically fetches students document profile
               .get(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {

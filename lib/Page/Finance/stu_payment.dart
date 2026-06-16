@@ -6,13 +6,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 // Clean Architecture Module Imports matching SDD System Maps
-import '../../domain/sams_financial_model.dart';
 import '../../provider/sams_financial_controller.dart';
 import 'payment_successful.dart';
 import 'payment_unsuccessful.dart';
 
 class StuPayment extends StatefulWidget {
-  // 👈 Bound name parameter contract explicitly to clear your dashboard compilation error
+  // Bound name parameter contract explicitly to clear your dashboard compilation error
   final String passedStudentMatricId;
 
   const StuPayment({super.key, required this.passedStudentMatricId});
@@ -124,7 +123,7 @@ class _StuPaymentState extends State<StuPayment> {
       final String generatedReceiptNo =
           (Random().nextInt(900000) + 100000).toString();
 
-      // 2. Delegate Database Operations to the Controller (PACK311-SAMS-2026)
+      // 2. Delegate Database Operations to the Controller
       final SAMSFinancialController financialController =
           SAMSFinancialController();
 
@@ -138,7 +137,7 @@ class _StuPaymentState extends State<StuPayment> {
       );
 
       if (isSuccess) {
-        // 👈 AUTOMATIC UNBLOCKING CONTROLLER INTERACTION PIPELINE
+        // AUTOMATIC UNBLOCKING CONTROLLER INTERACTION PIPELINE
         // If the balance drops to zero or lower, automatically toggle account access back to NOT BLOCKED
         if (remainingNewBalance <= 0) {
           await financialController.updateStudentStatus(

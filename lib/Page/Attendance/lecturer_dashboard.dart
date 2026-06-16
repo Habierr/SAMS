@@ -15,7 +15,6 @@ class LecturerDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-
       drawer: Drawer(
         child: Column(
           children: [
@@ -48,7 +47,6 @@ class LecturerDashboard extends StatelessWidget {
                 ),
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Dashboard'),
@@ -56,10 +54,8 @@ class LecturerDashboard extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
-
             const Spacer(),
             const Divider(),
-
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -73,23 +69,20 @@ class LecturerDashboard extends StatelessWidget {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/login',
-                      (route) => false,
+                  (route) => false,
                 );
               },
             ),
-
             const SizedBox(height: 15),
           ],
         ),
       ),
-
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
-
           leading: Builder(
             builder: (context) => IconButton(
               icon: const Icon(Icons.menu, color: Colors.white, size: 26),
@@ -98,7 +91,6 @@ class LecturerDashboard extends StatelessWidget {
               },
             ),
           ),
-
           title: const Text(
             'STUDENT ACADEMIC\nMANAGEMENT',
             textAlign: TextAlign.center,
@@ -110,7 +102,6 @@ class LecturerDashboard extends StatelessWidget {
             ),
           ),
           centerTitle: true,
-
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -121,7 +112,6 @@ class LecturerDashboard extends StatelessWidget {
               ),
             ),
           ],
-
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -137,7 +127,6 @@ class LecturerDashboard extends StatelessWidget {
           ),
         ),
       ),
-
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(18, 30, 18, 20),
@@ -148,7 +137,6 @@ class LecturerDashboard extends StatelessWidget {
             topRight: Radius.circular(18),
           ),
         ),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -160,9 +148,7 @@ class LecturerDashboard extends StatelessWidget {
                 color: Color(0xFF111B4D),
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Center(
               child: Text(
                 'My Courses',
@@ -173,16 +159,13 @@ class LecturerDashboard extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('registrations')
                     .where('lectName', isEqualTo: lecturerName)
                     .snapshots(),
-
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return Center(
@@ -214,19 +197,17 @@ class LecturerDashboard extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     itemCount: registrations.length,
                     gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       crossAxisSpacing: 18,
                       mainAxisSpacing: 26,
-                      childAspectRatio: 0.80,
+                      childAspectRatio: 0.65,
                     ),
-
                     itemBuilder: (context, index) {
-                      final data = registrations[index].data()
-                      as Map<String, dynamic>;
+                      final data =
+                          registrations[index].data() as Map<String, dynamic>;
 
-                      final regID =
-                          data['regID'] ?? registrations[index].id;
+                      final regID = data['regID'] ?? registrations[index].id;
 
                       final classType = data['classType'] ?? 'Class';
                       final sectionNo = data['sectNo'] ?? '-';
@@ -235,16 +216,14 @@ class LecturerDashboard extends StatelessWidget {
                       final endTime = data['endTime'] ?? '-';
                       final semester = data['semester'] ?? '-';
 
-                      final subCode =
-                          data['subCode'] ??
-                              data['subjectCode'] ??
-                              data['courseCode'] ??
-                              regID;
+                      final subCode = data['subCode'] ??
+                          data['subjectCode'] ??
+                          data['courseCode'] ??
+                          regID;
 
-                      final subName =
-                          data['subName'] ??
-                              data['subjectName'] ??
-                              '$classType ($sectionNo)';
+                      final subName = data['subName'] ??
+                          data['subjectName'] ??
+                          '$classType ($sectionNo)';
 
                       return InkWell(
                         borderRadius: BorderRadius.circular(10),
@@ -267,25 +246,22 @@ class LecturerDashboard extends StatelessWidget {
                             },
                           );
                         },
-
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFF1F5EE),
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF7C4DFF)
-                                    .withOpacity(0.18),
+                                color:
+                                    const Color(0xFF7C4DFF).withOpacity(0.18),
                                 blurRadius: 7,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-
                           child: Column(
                             children: [
                               const SizedBox(height: 12),
-
                               Image.asset(
                                 'assets/books.png',
                                 width: 60,
@@ -299,9 +275,7 @@ class LecturerDashboard extends StatelessWidget {
                                   );
                                 },
                               ),
-
                               const SizedBox(height: 8),
-
                               Text(
                                 subCode.toString(),
                                 textAlign: TextAlign.center,
@@ -311,9 +285,7 @@ class LecturerDashboard extends StatelessWidget {
                                   color: Color(0xFF111B4D),
                                 ),
                               ),
-
                               const SizedBox(height: 6),
-
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(
@@ -332,9 +304,7 @@ class LecturerDashboard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-
                               const SizedBox(height: 8),
-
                               Text(
                                 'Day: $day',
                                 style: const TextStyle(
@@ -343,7 +313,6 @@ class LecturerDashboard extends StatelessWidget {
                                   color: Color(0xFF111B4D),
                                 ),
                               ),
-
                               Text(
                                 'Time: $startTime - $endTime',
                                 textAlign: TextAlign.center,
@@ -353,7 +322,6 @@ class LecturerDashboard extends StatelessWidget {
                                   color: Color(0xFF111B4D),
                                 ),
                               ),
-
                               Text(
                                 'Semester: $semester',
                                 style: const TextStyle(

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart'
+    as http; // Added HTTP for live network API operations
+import 'dart:convert';
 
 class UnpaidStuList extends StatefulWidget {
   const UnpaidStuList({super.key});
@@ -32,6 +35,68 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     super.dispose();
   }
 
+  // Added live EmailJS single execution pipeline handler
+  Future<void> _sendLiveEmailReminder({
+    required String targetName,
+    required String targetEmail,
+    required String targetBalance,
+  }) async {
+    const String serviceId = 'service_nhkos7p';
+    const String templateId = 'template_le2c00i';
+    const String publicKey = '--_2ij_sFZf0k8Vtl';
+
+    final Uri apiEndpoint =
+        Uri.parse('https://api.emailjs.com/api/v1.0/email/send');
+
+    try {
+      final response = await http.post(
+        apiEndpoint,
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'http://localhost',
+        },
+        body: jsonEncode({
+          'service_id': serviceId,
+          'template_id': templateId,
+          'user_id': publicKey,
+          'template_params': {
+            'name': targetName,
+            'to_email': targetEmail,
+            'feeBalance': targetBalance,
+          },
+        }),
+      );
+      if (response.statusCode == 200) {
+        debugPrint("Notice email successfully sent to $targetEmail");
+      } else {
+        debugPrint("EmailJS server rejected request: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Mailing network exception hook: $e");
+    }
+  }
+
+  // Added batch controller to iterate and notify all checked items collectively
+  Future<void> _processBulkNotificationEmails() async {
+    for (String id in _selectedStudentIds) {
+      try {
+        final doc =
+            await FirebaseFirestore.instance.collection('users').doc(id).get();
+        if (doc.exists) {
+          final sData = doc.data() as Map<String, dynamic>;
+          double bal = await _calculateStudentSemBalance(id);
+          await _sendLiveEmailReminder(
+            targetName: sData['name'] ?? 'Student',
+            targetEmail: sData['email'] ?? 'student@student.umpsa.edu.my',
+            targetBalance: bal.toStringAsFixed(2),
+          );
+        }
+      } catch (e) {
+        debugPrint("Bulk item retrieval failure: $e");
+      }
+    }
+  }
+
   // Helper calculation function to check outstanding fee balance context
   Future<double> _calculateStudentSemBalance(String matricId) async {
     final receiptSnapshot = await FirebaseFirestore.instance
@@ -43,7 +108,8 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     double semReceived = 0.0;
     for (var doc in receiptSnapshot.docs) {
       final rData = doc.data();
-      if (rData['semester'] == 'SEM 2 25/26') {
+      if (rData['semester'] == 'SEM 2 25/26' ||
+          rData['semester'] == 'SEM II 25/26') {
         semReceived +=
             double.tryParse(rData['totalReceived'].toString()) ?? 0.0;
       }
@@ -379,11 +445,15 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                           message: 'The people you selected will be notified',
                           actionButtonText: 'NOTIFY',
                           actionButtonColor: Colors.blue.shade800,
-                          onConfirm: () => _showSuccessModal(
-                            Icons.notifications_active_outlined,
-                            Colors.black,
-                            'Notification have been sent to their email',
-                          ),
+                          onConfirm: () async {
+                            // 👈 Hooked sequential asynchronous dispatch call for bulk checkbox rows
+                            await _processBulkNotificationEmails();
+                            _showSuccessModal(
+                              Icons.notifications_active_outlined,
+                              Colors.black,
+                              'Notification have been sent to their email',
+                            );
+                          },
                         );
                       },
                     ),
@@ -482,8 +552,9 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                       .where('role', isEqualTo: 'student')
                       .snapshots(),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
+                    }
 
                     final rawDocs = snapshot.data!.docs;
 
@@ -491,24 +562,22 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                     return FutureBuilder<List<QueryDocumentSnapshot>>(
                       future: Future.wait(
                         rawDocs.map((doc) async {
-                          double bal = await _calculateStudentSemBalance(
-                            doc.id,
-                          );
+                          double bal =
+                              await _calculateStudentSemBalance(doc.id);
                           return MapEntry(doc, bal);
                         }),
                       ).then((entries) {
                         return entries
-                            .where(
-                              (entry) => entry.value > 0,
-                            ) // Only displays students with outstanding fee balance > 0
+                            .where((entry) => entry.value > 0)
                             .map((entry) => entry.key)
                             .toList();
                       }),
                       builder: (context, futureSnapshot) {
-                        if (!futureSnapshot.hasData)
+                        if (!futureSnapshot.hasData) {
                           return const Center(
                             child: CircularProgressIndicator(),
                           );
+                        }
 
                         final studentDocs = futureSnapshot.data!;
 
@@ -537,6 +606,8 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
 
                             final name = data['name'] ?? 'N/A';
                             final sponsor = data['sponsor'] ?? 'NONE';
+                            final studentEmail =
+                                data['email'] ?? 'student@student.umpsa.edu.my';
                             final currentStatus =
                                 (data['status'] ?? 'NOT BLOCKED').toString();
                             bool isBlocked =
@@ -632,12 +703,24 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                                     BorderRadius.circular(12),
                                               ),
                                             ),
-                                            onPressed: () => _showSuccessModal(
-                                              Icons
-                                                  .notifications_active_outlined,
-                                              Colors.black,
-                                              'Notification has been sent to $name\'s email',
-                                            ),
+                                            onPressed: () async {
+                                              double bal =
+                                                  await _calculateStudentSemBalance(
+                                                      matricId);
+                                              // 👈 Hooked direct operational asynchronous call for single student item
+                                              await _sendLiveEmailReminder(
+                                                targetName: name,
+                                                targetEmail: studentEmail,
+                                                targetBalance:
+                                                    bal.toStringAsFixed(2),
+                                              );
+                                              _showSuccessModal(
+                                                Icons
+                                                    .notifications_active_outlined,
+                                                Colors.black,
+                                                'Notification has been sent to $name\'s email',
+                                              );
+                                            },
                                             child: const Text(
                                               'NOTIFY',
                                               style: TextStyle(
@@ -653,7 +736,6 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                           width: 65,
                                           height: 24,
                                           child: ElevatedButton(
-                                            // DYNAMIC RENDERING BLOCK: Toggles display presentation state dynamically based on item data statuses
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: isBlocked
                                                   ? Colors.green
