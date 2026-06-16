@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sams/Page/student/student_dashboard.dart';
 import 'package:sams/Page/Attendance/attendanceList.dart';
 
+/// Attendance Check-In Page
+/// Displays all registered subjects for the logged-in student.
 class AttendanceCheckIn extends StatelessWidget {
   final String studentName;
   final String studentId;
@@ -13,38 +15,52 @@ class AttendanceCheckIn extends StatelessWidget {
     required this.studentId,
   });
 
+  /// Retrieve registered subjects from Firestore
   Future<List<Map<String, dynamic>>> getRegisteredSubjects() async {
     final FirebaseFirestore db = FirebaseFirestore.instance;
 
+    // Query registrations collection using student ID
     final regSnapshot = await db
         .collection('registrations')
         .where('studentID', isEqualTo: studentId)
         .get();
 
+    // Store unique subjects only
     final Map<String, Map<String, dynamic>> uniqueCourses = {};
 
     for (var regDoc in regSnapshot.docs) {
       final regData = regDoc.data();
 
+      // Get subject code
       final String subCode = (regData['subCode'] ?? '').toString();
+
+      // Skip if subject code is empty
       if (subCode.isEmpty) continue;
 
+      // Store subject information
       uniqueCourses[subCode] = {
         'code': subCode,
         'name': regData['subName'] ?? 'Subject Name',
       };
     }
 
+    // Return list of registered subjects
     return uniqueCourses.values.toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
+      // Background color of page
       backgroundColor: const Color(0xFFF5F7FA),
+
+      // Navigation Drawer
       drawer: Drawer(
         child: Column(
           children: [
+
+            // Drawer Header with UMPSA logo
             DrawerHeader(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -52,8 +68,6 @@ class AttendanceCheckIn extends StatelessWidget {
                     Color(0xFF11A06E),
                     Color(0xFF48C598),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
               ),
               child: Center(
@@ -62,18 +76,18 @@ class AttendanceCheckIn extends StatelessWidget {
                   children: [
                     Image.asset('assets/logo_umpsa.png', width: 55),
                     const SizedBox(height: 10),
+
+                    // System title
                     const Text(
                       'STUDENT ACADEMIC\nMANAGEMENT',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
                     ),
                   ],
                 ),
               ),
             ),
+
+            // Navigate back to Student Dashboard
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Dashboard'),
@@ -91,8 +105,11 @@ class AttendanceCheckIn extends StatelessWidget {
                 );
               },
             ),
+
             const Spacer(),
             const Divider(),
+
+            // Logout button
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text(
@@ -110,39 +127,37 @@ class AttendanceCheckIn extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 15),
           ],
         ),
       ),
+
+      // Application Header
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
+
+          // Open navigation drawer
           leading: Builder(
             builder: (context) => IconButton(
-              icon: const Icon(
-                Icons.menu,
-                color: Colors.white,
-                size: 26,
-              ),
+              icon: const Icon(Icons.menu),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
             ),
           ),
+
+          // System title
           title: const Text(
             'STUDENT ACADEMIC\nMANAGEMENT',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              height: 1.1,
-            ),
           ),
+
           centerTitle: true,
+
+          // UMPSA logo
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 12),
@@ -153,6 +168,8 @@ class AttendanceCheckIn extends StatelessWidget {
               ),
             ),
           ],
+
+          // Gradient background
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -161,71 +178,83 @@ class AttendanceCheckIn extends StatelessWidget {
                   Color(0xFF48C598),
                   Color(0xFF88E5BE),
                 ],
-                begin: Alignment.bottomLeft,
-                end: Alignment.topRight,
               ),
             ),
           ),
         ),
       ),
+
+      // Main Content
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(16, 30, 16, 20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(18),
-            topRight: Radius.circular(18),
-          ),
-        ),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            // Welcome message
             Text(
               'Welcome, $studentName',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF111B4D),
               ),
             ),
+
             const SizedBox(height: 20),
+
+            // Section title
             const Center(
               child: Text(
                 'My Courses',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF111B4D),
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
+
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: getRegisteredSubjects(),
+
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+
+                  // Show loading indicator while data is loading
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
                   }
 
+                  // Display error message if retrieval fails
                   if (snapshot.hasError) {
                     return Center(
-                      child: Text('Error loading subjects: ${snapshot.error}'),
+                      child: Text(
+                        'Error loading subjects: ${snapshot.error}',
+                      ),
                     );
                   }
 
                   final courses = snapshot.data ?? [];
 
+                  // Display message if no subjects found
                   if (courses.isEmpty) {
                     return const Center(
-                      child: Text('No registered subjects found'),
+                      child: Text(
+                        'No registered subjects found',
+                      ),
                     );
                   }
 
+                  // Display registered subjects in grid layout
                   return GridView.builder(
-                    padding: EdgeInsets.zero,
                     itemCount: courses.length,
+
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -233,11 +262,14 @@ class AttendanceCheckIn extends StatelessWidget {
                       mainAxisSpacing: 26,
                       childAspectRatio: 0.95,
                     ),
+
                     itemBuilder: (context, index) {
+
                       final course = courses[index];
 
                       return InkWell(
-                        borderRadius: BorderRadius.circular(10),
+
+                        // Open attendance list of selected subject
                         onTap: () {
                           Navigator.push(
                             context,
@@ -251,61 +283,58 @@ class AttendanceCheckIn extends StatelessWidget {
                             ),
                           );
                         },
+
                         child: Container(
                           decoration: BoxDecoration(
                             color: const Color(0xFFF1F5EE),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color:
-                                    const Color(0xFF7C4DFF).withOpacity(0.18),
-                                blurRadius: 7,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            borderRadius:
+                                BorderRadius.circular(10),
                           ),
+
                           child: Column(
                             children: [
+
                               const SizedBox(height: 14),
+
+                              // Subject icon
                               Image.asset(
                                 'assets/books.png',
                                 width: 70,
                                 height: 70,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
+
+                                // Display default icon if image fails
+                                errorBuilder:
+                                    (context, error, stackTrace) {
                                   return const Icon(
                                     Icons.menu_book_rounded,
                                     size: 65,
-                                    color: Colors.blue,
                                   );
                                 },
                               ),
+
                               const SizedBox(height: 8),
+
+                              // Subject code
                               Text(
                                 course['code'],
                                 style: const TextStyle(
-                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF111B4D),
                                 ),
                               ),
+
                               const SizedBox(height: 5),
+
+                              // Subject name
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
+                                padding:
+                                    const EdgeInsets.symmetric(
                                   vertical: 7,
                                   horizontal: 4,
                                 ),
-                                color: const Color(0xFFE6EDF9),
                                 child: Text(
                                   course['name'],
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    height: 1.1,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF111B4D),
-                                  ),
                                 ),
                               ),
                             ],
