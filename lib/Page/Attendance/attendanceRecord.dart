@@ -53,6 +53,7 @@ class _AttendanceRecordState extends State<AttendanceRecord> {
   }
 
   Future<void> pickDate() async {
+    // Open date picker for attendance record search
     final date = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -86,6 +87,7 @@ class _AttendanceRecordState extends State<AttendanceRecord> {
         .where('classSession', isEqualTo: selectedSession)
         .get();
 
+    // Check whether attendance record exists
     if (classCodeResult.docs.isEmpty) {
       showNoRecordPopup();
       return;
