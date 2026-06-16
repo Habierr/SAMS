@@ -5,6 +5,7 @@ import 'package:sams/Page/Attendance/fillAttendance.dart';
 import 'package:sams/Page/student/student_dashboard.dart';
 
 class AttendanceList extends StatelessWidget {
+  // Student and selected subject information
   final String studentName;
   final String studentId;
   final String subCode;
