@@ -4,6 +4,11 @@ import '../../../Provider/ORController.dart';
 import '../../../Domain/ORModel.dart';
 import 'EditOR.dart';
 
+// =============================================================================
+// SubjectOffering Screen
+// Displays all subject offerings grouped by subject code with lecture groups
+// and their associated lab/tutorial sections.
+// =============================================================================
 class SubjectOffering extends StatefulWidget {
   const SubjectOffering({super.key});
 
@@ -12,9 +17,15 @@ class SubjectOffering extends StatefulWidget {
 }
 
 class _SubjectOfferingState extends State<SubjectOffering> {
+  // Controller for search text input
   final TextEditingController _searchController = TextEditingController();
+  // Current search query string
   String _searchQuery = '';
 
+  // ---------------------------------------------------------------------------
+  // Helper: Generate sequential Section ID (e.g., SEC001, SEC002, ...)
+  // Takes existing document IDs and returns the next available ID.
+  // ---------------------------------------------------------------------------
   String _generateSectID(List<String> existingDocIds) {
     int max = 0;
     for (final id in existingDocIds) {
@@ -27,10 +38,16 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     return 'SEC${(max + 1).toString().padLeft(3, '0')}';
   }
 
+  // ---------------------------------------------------------------------------
+  // Group offerings by subject code and lecture section number
+  // Returns: Map<subCode, Map<sectNo, _LectureGroup>>
+  // Each _LectureGroup contains a lecture and its associated secondary classes.
+  // ---------------------------------------------------------------------------
   Map<String, Map<String, _LectureGroup>> _groupOfferings(
       List<OfferingRegistration> offerings, List<String> docIds) {
     final Map<String, Map<String, _LectureGroup>> result = {};
 
+    // First pass: collect all Lecture offerings as group leaders
     for (int i = 0; i < offerings.length; i++) {
       final o = offerings[i];
       final id = docIds[i];
@@ -43,6 +60,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
       }
     }
 
+    // Second pass: assign Lab/Tutorial offerings to matching lecture groups
     for (int i = 0; i < offerings.length; i++) {
       final o = offerings[i];
       final id = docIds[i];
@@ -50,6 +68,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
         result.putIfAbsent(o.subCode, () => {});
         final subMap = result[o.subCode]!;
 
+        // Try to match section number prefix (e.g., "01" matches "01A")
         String? matchedLectSectNo;
         for (final lectSectNo in subMap.keys) {
           if (o.sectNo.startsWith(lectSectNo)) {
@@ -59,9 +78,11 @@ class _SubjectOfferingState extends State<SubjectOffering> {
         }
 
         if (matchedLectSectNo != null) {
+          // Add to existing lecture group
           subMap[matchedLectSectNo]!.secondaries.add(o);
           subMap[matchedLectSectNo]!.secondaryDocIds.add(id);
         } else {
+          // No matching lecture found - create orphan group
           subMap.putIfAbsent(
             o.sectNo,
             () => _LectureGroup(lecture: null, lectureDocId: null),
@@ -75,6 +96,10 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     return result;
   }
 
+  // ---------------------------------------------------------------------------
+  // Calculate total quota used by all secondary sections in a group
+  // Optional: exclude a specific document ID and/or override its quota.
+  // ---------------------------------------------------------------------------
   int _totalSecondaryQuota(_LectureGroup group,
       {String? excludeDocId, int? overrideQuota}) {
     int total = 0;
@@ -90,22 +115,33 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     return total;
   }
 
+  // ---------------------------------------------------------------------------
+  // Suggest a quota for a new secondary section based on remaining lecture quota
+  // ---------------------------------------------------------------------------
   int _suggestQuota(_LectureGroup group, int lectureQuota) {
     final usedQuota = _totalSecondaryQuota(group);
     final remaining = lectureQuota - usedQuota;
     return remaining > 0 ? remaining : 0;
   }
 
+  // ---------------------------------------------------------------------------
+  // Show bottom sheet form for adding or editing an offering
+  // Parameters:
+  //   - offering: existing offering for edit mode, null for add mode
+  //   - docId: Firestore document ID for edit mode
+  //   - parentGroup: lecture group context for quota validation on secondary
+  // ---------------------------------------------------------------------------
   void _showOfferingForm(
     BuildContext context,
     ORController controller, {
     OfferingRegistration? offering,
     String? docId,
-    _LectureGroup? parentGroup, // lecture group untuk validate quota lab
+    _LectureGroup? parentGroup,
   }) {
     final isEdit = offering != null;
     final isSecondary = isEdit && offering.classType != 'Lecture';
 
+    // Initialize text controllers with existing values for edit mode
     final subCodeCtrl =
         TextEditingController(text: isEdit ? offering.subCode : '');
     final subNameCtrl =
@@ -121,6 +157,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
         TextEditingController(text: isEdit ? offering.lectName : '');
     final venueCtrl = TextEditingController(text: isEdit ? offering.venue : '');
 
+    // Determine suggested quota value
     int suggestedQuota = 0;
     if (parentGroup != null && parentGroup.lecture != null) {
       if (isEdit) {
@@ -135,17 +172,20 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     final quotaCtrl =
         TextEditingController(text: isEdit ? offering.quota.toString() : '');
 
+    // Class type selection (Lecture/Lab/Tutorial)
     String selectedClassType = isEdit ? offering.classType : 'Lecture';
     String? quotaError;
 
     final formKey = GlobalKey<FormState>();
 
+    // Show modal bottom sheet with form
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) {
+          // Calculate maximum allowed quota for secondary sections
           int? maxAllowedQuota;
           if (selectedClassType != 'Lecture' && parentGroup?.lecture != null) {
             final lectureQuota = parentGroup!.lecture!.quota;
@@ -173,7 +213,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Drag handle
+                      // Drag handle for bottom sheet
                       Center(
                         child: Container(
                           width: 40,
@@ -185,6 +225,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                           ),
                         ),
                       ),
+                      // Form title
                       Text(
                         isEdit
                             ? 'Edit Subject Offering'
@@ -256,13 +297,13 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                       color: Color(0xFF1A5F7A), width: 1.5),
                                 ),
                               ),
+                              // Disable class type change during edit
                               onChanged: isEdit
                                   ? null
                                   : (val) {
                                       if (val != null) {
                                         setModalState(() {
                                           selectedClassType = val;
-
                                           quotaCtrl.clear();
                                         });
                                       }
@@ -281,6 +322,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                       ),
                       const SizedBox(height: 14),
 
+                      // Quota field with max quota indicator for secondary sections
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -326,7 +368,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                     final val = int.tryParse(v);
                                     if (val == null) return 'Number only';
                                     if (val <= 0) return 'Must be > 0';
-
+                                    // Validate against lecture quota limit for secondary
                                     if (selectedClassType != 'Lecture' &&
                                         maxAllowedQuota != null &&
                                         val > maxAllowedQuota) {
@@ -336,6 +378,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                   },
                                 ),
                               ),
+                              // Display max quota badge for secondary sections
                               if (selectedClassType != 'Lecture' &&
                                   maxAllowedQuota != null) ...[
                                 const SizedBox(width: 10),
@@ -380,6 +423,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                               ],
                             ],
                           ),
+                          // Show quota breakdown for secondary sections
                           if (selectedClassType != 'Lecture' &&
                               parentGroup?.lecture != null)
                             Padding(
@@ -407,7 +451,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Venue
+                      // Venue field
                       _buildField(
                         controller: venueCtrl,
                         label: 'Venue',
@@ -416,7 +460,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Days
+                      // Days field
                       _buildField(
                         controller: daysCtrl,
                         label: 'Day(s)',
@@ -449,7 +493,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                       ),
                       const SizedBox(height: 14),
 
-                      // Lecturer Name
+                      // Lecturer Name field
                       _buildField(
                         controller: lectNameCtrl,
                         label: 'Lecturer Name',
@@ -458,7 +502,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Buttons
+                      // Action buttons: Cancel + Save/Add
                       Row(
                         children: [
                           Expanded(
@@ -482,8 +526,10 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                             flex: 2,
                             child: ElevatedButton(
                               onPressed: () async {
+                                // Validate form before proceeding
                                 if (!formKey.currentState!.validate()) return;
 
+                                // Determine semester value
                                 String resolvedSemester;
                                 if (isEdit) {
                                   resolvedSemester = offering!.semester;
@@ -503,11 +549,13 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                   resolvedSemester = session.semester;
                                 }
 
+                                // Generate section ID for new offering
                                 final sectID = isEdit
                                     ? offering!.sectID
                                     : _generateSectID(
                                         controller.offeringsDocIds);
 
+                                // Build new OfferingRegistration object
                                 final newOffering = OfferingRegistration(
                                   sectID: sectID,
                                   subCode: subCodeCtrl.text.trim(),
@@ -522,11 +570,11 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                   quota:
                                       int.tryParse(quotaCtrl.text.trim()) ?? 0,
                                   enrolled: isEdit ? offering!.enrolled : 0,
-                                  // ✅ Guna resolvedSemester, bukan activeSession
                                   semester: resolvedSemester,
                                   session: '',
                                 );
 
+                                // Save or update in Firestore via controller
                                 if (isEdit && docId != null) {
                                   await controller.updateOffering(
                                       docId, newOffering);
@@ -567,6 +615,9 @@ class _SubjectOfferingState extends State<SubjectOffering> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Show confirmation dialog before deleting an offering
+  // ---------------------------------------------------------------------------
   void _confirmDelete(
       BuildContext context, ORController controller, String docId) {
     showDialog(
@@ -642,6 +693,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
       backgroundColor: const Color(0xFFF0F4F8),
       body: Consumer<ORController>(
         builder: (context, controller, child) {
+          // Filter offerings based on search query
           final filteredOfferings = <OfferingRegistration>[];
           final filteredDocIds = <String>[];
 
@@ -658,12 +710,13 @@ class _SubjectOfferingState extends State<SubjectOffering> {
             }
           }
 
+          // Group filtered offerings by subject and lecture section
           final grouped = _groupOfferings(filteredOfferings, filteredDocIds);
           final subCodes = grouped.keys.toList()..sort();
 
           return Column(
             children: [
-              // ── Header ──────────────────────────────────────────────
+              // ── Header with gradient background ──────────────────────────────
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -682,11 +735,13 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                       children: [
                         Row(
                           children: [
+                            // Back button
                             IconButton(
                               icon: const Icon(Icons.arrow_back_ios_new,
                                   color: Colors.white, size: 20),
                               onPressed: () => Navigator.pop(context),
                             ),
+                            // Title
                             const Expanded(
                               child: Text(
                                 'Subject Offering',
@@ -698,6 +753,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                 ),
                               ),
                             ),
+                            // School icon placeholder
                             Container(
                               width: 40,
                               height: 40,
@@ -711,6 +767,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                           ],
                         ),
                         const SizedBox(height: 4),
+                        // Display active session info
                         Text(
                           controller.activeSession != null
                               ? '${controller.activeSession!.semester} ${controller.activeSession!.sessionID}'
@@ -724,7 +781,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                 ),
               ),
 
-              // ── Search ───────────────────────────────────────────────
+              // ── Search Bar ───────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: TextField(
@@ -735,6 +792,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                     hintStyle: TextStyle(color: Colors.grey[400]),
                     prefixIcon:
                         const Icon(Icons.search, color: Color(0xFF1A5F7A)),
+                    // Clear button appears when search is not empty
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             icon: const Icon(Icons.clear,
@@ -756,7 +814,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                 ),
               ),
 
-              // ── Label ────────────────────────────────────────────────
+              // ── Stats Label ────────────────────────────────────────────────
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -791,7 +849,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                 ),
               ),
 
-              // ── Grouped List ─────────────────────────────────────────
+              // ── Grouped List View ─────────────────────────────────────────
               Expanded(
                 child: controller.isLoading
                     ? const Center(child: CircularProgressIndicator())
@@ -810,6 +868,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                             itemBuilder: (context, idx) {
                               final subCode = subCodes[idx];
                               final lectGroups = grouped[subCode]!;
+                              // Get subject name from first offering
                               final subName = filteredOfferings
                                   .firstWhere((o) => o.subCode == subCode,
                                       orElse: () => filteredOfferings.first)
@@ -820,6 +879,7 @@ class _SubjectOfferingState extends State<SubjectOffering> {
                                 subName: subName,
                                 lectGroups: lectGroups,
                                 onEdit: (offering, docId, group) async {
+                                  // Navigate to edit screen
                                   final result = await Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -847,7 +907,8 @@ class _SubjectOfferingState extends State<SubjectOffering> {
         },
       ),
 
-      // ── FAB ──────────────────────────────────────────────────────────
+      // ── Floating Action Button ──────────────────────────────────────────
+      // Centered at bottom to add new subject offering
       floatingActionButton: Consumer<ORController>(
         builder: (context, controller, _) => SizedBox(
           width: double.infinity,
@@ -885,15 +946,18 @@ class _SubjectOfferingState extends State<SubjectOffering> {
 }
 
 class _LectureGroup {
-  final OfferingRegistration? lecture;
-  final String? lectureDocId;
-  final List<OfferingRegistration> secondaries = [];
-  final List<String> secondaryDocIds = [];
+  final OfferingRegistration?
+      lecture; // Lecture offering (can be null for orphans)
+  final String? lectureDocId; // Firestore document ID of the lecture
+  final List<OfferingRegistration> secondaries = []; // Lab/Tutorial offerings
+  final List<String> secondaryDocIds = []; // Corresponding document IDs
 
   _LectureGroup({required this.lecture, required this.lectureDocId});
 
+  // Total quota used by all secondary sections
   int get totalSecondaryQuota => secondaries.fold(0, (sum, s) => sum + s.quota);
 
+  // Remaining quota available for new secondary sections
   int get remainingQuota =>
       lecture != null ? lecture!.quota - totalSecondaryQuota : 0;
 }
@@ -920,6 +984,7 @@ class _SubjectCard extends StatefulWidget {
 }
 
 class _SubjectCardState extends State<_SubjectCard> {
+  // Set of expanded lecture section numbers (initially all expanded)
   final Set<String> _expanded = {};
 
   @override
@@ -948,7 +1013,7 @@ class _SubjectCardState extends State<_SubjectCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Subject header ─────────────────────────────────────────
+          // ── Subject Header ─────────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: const BoxDecoration(
@@ -961,6 +1026,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Subject code
                       Text(
                         widget.subCode,
                         style: const TextStyle(
@@ -970,6 +1036,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                         ),
                       ),
                       const SizedBox(height: 2),
+                      // Subject name
                       Text(
                         widget.subName,
                         style: const TextStyle(
@@ -981,6 +1048,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                     ],
                   ),
                 ),
+                // Badge showing number of lecture groups
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1001,7 +1069,7 @@ class _SubjectCardState extends State<_SubjectCard> {
             ),
           ),
 
-          // ── Lecture groups ─────────────────────────────────────────
+          // ── Lecture Groups ─────────────────────────────────────────
           ...lectSectNos.asMap().entries.map((entry) {
             final idx = entry.key;
             final lectSectNo = entry.value;
@@ -1011,10 +1079,11 @@ class _SubjectCardState extends State<_SubjectCard> {
 
             return Column(
               children: [
-                // Lecture row
+                // ── Lecture Row ─────────────────────────────────────
                 if (group.lecture != null) ...[
                   InkWell(
                     onTap: () => setState(() {
+                      // Toggle expansion state
                       if (isExpanded) {
                         _expanded.remove(lectSectNo);
                       } else {
@@ -1025,7 +1094,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                       padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
                       child: Row(
                         children: [
-                          // Expand icon
+                          // Expand/collapse arrow icon
                           Icon(
                             isExpanded
                                 ? Icons.keyboard_arrow_down
@@ -1035,7 +1104,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                           ),
                           const SizedBox(width: 6),
 
-                          // Section badge
+                          // Section number badge
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
@@ -1054,7 +1123,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                           ),
                           const SizedBox(width: 8),
 
-                          // Info
+                          // Lecture details
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1086,7 +1155,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                             ),
                           ),
 
-                          // Edit + Delete lecture
+                          // Edit + Delete buttons for lecture
                           Column(
                             children: [
                               _IconBtn(
@@ -1110,7 +1179,8 @@ class _SubjectCardState extends State<_SubjectCard> {
                   ),
                 ],
 
-                // ── Secondary sections ─────────────────────────────
+                // ── Secondary Sections (Lab/Tutorial) ─────────────────────
+                // Only shown when lecture group is expanded
                 if (isExpanded) ...[
                   ...group.secondaries.asMap().entries.map((secEntry) {
                     final secIdx = secEntry.key;
@@ -1123,7 +1193,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                         padding: const EdgeInsets.fromLTRB(40, 8, 12, 8),
                         child: Row(
                           children: [
-                            // Connector line indicator
+                            // Visual connector line
                             Container(
                               width: 2,
                               height: 36,
@@ -1131,7 +1201,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                               margin: const EdgeInsets.only(right: 10),
                             ),
 
-                            // Section badge
+                            // Section number badge (orange for secondary)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
@@ -1150,7 +1220,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                             ),
                             const SizedBox(width: 8),
 
-                            // Info
+                            // Secondary details
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1162,7 +1232,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                                         color: Colors.orange.shade600,
                                       ),
                                       const SizedBox(width: 6),
-                                      // ✅ Quota untuk secondary
+                                      // Enrollment/Quota display
                                       Text(
                                         '${sec.enrolled}/${sec.quota}',
                                         style: TextStyle(
@@ -1197,7 +1267,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                               ),
                             ),
 
-                            // Edit + Delete secondary
+                            // Edit + Delete buttons for secondary
                             Column(
                               children: [
                                 _IconBtn(
@@ -1219,6 +1289,8 @@ class _SubjectCardState extends State<_SubjectCard> {
                       ),
                     );
                   }),
+                  // ── "Add Lab/Tutorial" button ──────────────────────
+                  // Shown when lecture has remaining quota
                   if (group.lecture != null && group.remainingQuota > 0)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(40, 4, 12, 8),
@@ -1256,6 +1328,7 @@ class _SubjectCardState extends State<_SubjectCard> {
                     ),
                 ],
 
+                // Divider between lecture groups
                 if (!isLast)
                   const Divider(
                       height: 1, thickness: 1, color: Color(0xFFF0F0F0)),

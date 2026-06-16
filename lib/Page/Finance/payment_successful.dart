@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+// PaymentSuccessful screen - shown after a student successfully completes a payment
+// Displays confirmation message with options to print receipt or go back
 class PaymentSuccessful extends StatelessWidget {
   const PaymentSuccessful({super.key});
 
@@ -7,12 +9,13 @@ class PaymentSuccessful extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+      // Custom app bar with gradient background and logo
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(140.0),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          automaticallyImplyLeading: false,
+          automaticallyImplyLeading: false, // No back button needed here
           title: const Padding(
             padding: EdgeInsets.only(top: 20.0),
             child: Text(
@@ -28,6 +31,7 @@ class PaymentSuccessful extends StatelessWidget {
           ),
           centerTitle: true,
           actions: [
+            // University logo displayed on the right side
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: Container(
@@ -77,12 +81,14 @@ class PaymentSuccessful extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Success icon - green checkmark
               const Icon(
                 Icons.check_circle_outline,
                 color: Colors.green,
                 size: 100,
               ),
               const SizedBox(height: 24),
+              // Main success message
               const Text(
                 'Payment\nSuccessful',
                 textAlign: TextAlign.center,
@@ -93,6 +99,7 @@ class PaymentSuccessful extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // Information about where receipt will be sent
               const Text(
                 'Receipt will be sent to\nyour email and saved\nin Student Finance\nRecord',
                 textAlign: TextAlign.center,
@@ -104,6 +111,7 @@ class PaymentSuccessful extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
+              // Print receipt button - currently shows a snackbar placeholder
               SizedBox(
                 width: 200,
                 height: 44,
@@ -132,6 +140,7 @@ class PaymentSuccessful extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // Back button - returns to previous screen
               SizedBox(
                 width: 200,
                 height: 44,
@@ -143,7 +152,7 @@ class PaymentSuccessful extends StatelessWidget {
                     ),
                   ),
                   onPressed: () =>
-                      Navigator.pop(context), // Safely returns to dashboard
+                      Navigator.pop(context), // Returns to dashboard
                   child: const Text(
                     'BACK',
                     style: TextStyle(

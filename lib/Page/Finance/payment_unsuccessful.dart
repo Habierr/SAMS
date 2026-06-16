@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+// PaymentUnsuccessful screen - shown when a payment attempt fails
+// Displays error message with a back button to retry
 class PaymentUnsuccessful extends StatelessWidget {
   const PaymentUnsuccessful({super.key});
 
@@ -7,6 +9,7 @@ class PaymentUnsuccessful extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+      // Custom app bar with gradient background and logo
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(140.0),
         child: AppBar(
@@ -28,6 +31,7 @@ class PaymentUnsuccessful extends StatelessWidget {
           ),
           centerTitle: true,
           actions: [
+            // University logo on the right side
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: Container(
@@ -77,8 +81,10 @@ class PaymentUnsuccessful extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Error icon - red cancel symbol
               const Icon(Icons.cancel_outlined, color: Colors.red, size: 100),
               const SizedBox(height: 24),
+              // Failure message
               const Text(
                 'Payment\nUnsuccessful',
                 textAlign: TextAlign.center,
@@ -89,6 +95,7 @@ class PaymentUnsuccessful extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // Simple instruction to retry
               const Text(
                 'Please try again',
                 style: TextStyle(
@@ -98,6 +105,7 @@ class PaymentUnsuccessful extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
+              // Back button - returns to previous screen to retry payment
               SizedBox(
                 width: 200,
                 height: 44,
@@ -109,7 +117,7 @@ class PaymentUnsuccessful extends StatelessWidget {
                     ),
                   ),
                   onPressed: () =>
-                      Navigator.pop(context), // Pops back to clean up sequence
+                      Navigator.pop(context), // Returns to payment screen
                   child: const Text(
                     'BACK',
                     style: TextStyle(

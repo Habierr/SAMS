@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:http/http.dart'
-    as http; // Added HTTP for live network API operations
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+// UnpaidStuList - Treasury screen showing students with outstanding fees
+// Allows bulk actions: notify, block/unblock, and search functionality
 class UnpaidStuList extends StatefulWidget {
   const UnpaidStuList({super.key});
 
@@ -15,7 +16,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
-  // Tracks checked checkboxes by storing their unique Matric IDs
+  // Tracks selected student IDs for batch operations
   final Set<String> _selectedStudentIds = {};
   List<QueryDocumentSnapshot> _currentFilteredStudents = [];
 
@@ -35,7 +36,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     super.dispose();
   }
 
-  // Added live EmailJS single execution pipeline handler
+  // Sends individual email reminder via EmailJS API
   Future<void> _sendLiveEmailReminder({
     required String targetName,
     required String targetEmail,
@@ -76,7 +77,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     }
   }
 
-  // Added batch controller to iterate and notify all checked items collectively
+  // Processes bulk email notifications for all selected students
   Future<void> _processBulkNotificationEmails() async {
     for (String id in _selectedStudentIds) {
       try {
@@ -97,7 +98,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     }
   }
 
-  // Helper calculation function to check outstanding fee balance context
+  // Calculates outstanding balance for current semester
   Future<double> _calculateStudentSemBalance(String matricId) async {
     final receiptSnapshot = await FirebaseFirestore.instance
         .collection('users')
@@ -118,8 +119,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     return balance < 0 ? 0.0 : balance;
   }
 
-  // --- POPUP DIALOG WINDOWS CONFIGURED TO MATCH DESIGN WIREFRAMES ---
-
+  // Generic confirmation dialog with customizable content
   void _showConfirmationDialog({
     required IconData icon,
     required Color iconColor,
@@ -190,7 +190,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                           ),
                         ),
                         onPressed: () {
-                          Navigator.pop(context); // Close confirm modal
+                          Navigator.pop(context);
                           onConfirm();
                         },
                         child: Text(
@@ -212,6 +212,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     );
   }
 
+  // Success modal after operation completion
   void _showSuccessModal(IconData icon, Color iconColor, String message) {
     showDialog(
       context: context,
@@ -255,7 +256,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                       Navigator.pop(context);
                       setState(
                         () => _selectedStudentIds.clear(),
-                      ); // Clean selections after execution
+                      );
                     },
                     child: const Text(
                       'OKAY',
@@ -274,7 +275,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     );
   }
 
-  // Database Execution Action Loops
+  // Bulk block/unblock operation for selected students
   Future<void> _executeBulkBlockStatus(bool standardBlockTrigger) async {
     for (String id in _selectedStudentIds) {
       await FirebaseFirestore.instance.collection('users').doc(id).update({
@@ -290,6 +291,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     );
   }
 
+  // Toggle block status for individual student
   Future<void> _toggleSingleBlock(String matricId, String currentStatus) async {
     bool isCurrentlyBlocked = currentStatus.trim().toUpperCase() == 'BLOCKED';
     await FirebaseFirestore.instance.collection('users').doc(matricId).update({
@@ -302,7 +304,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
 
-      // Treasury Standard AppBar
+      // Treasury standard gradient app bar
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(140.0),
         child: AppBar(
@@ -324,6 +326,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
           ),
           centerTitle: true,
           actions: [
+            // University logo
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: Container(
@@ -372,13 +375,14 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              // Page title
               const Text(
                 'List of Unsettled Student Fees',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
 
-              // Search Bar Layout Element
+              // Search bar
               TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
@@ -395,9 +399,10 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
               ),
               const SizedBox(height: 12),
 
-              // --- TOP BATCH CONTROLS REGION ROWS ---
+              // Batch control row - select all and action buttons
               Row(
                 children: [
+                  // Select all checkbox
                   Checkbox(
                     value: _currentFilteredStudents.isNotEmpty &&
                         _selectedStudentIds.length ==
@@ -416,14 +421,16 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                   ),
                   const Icon(Icons.arrow_drop_down),
                   const SizedBox(width: 8),
+                  // Refresh button
                   IconButton(
                     icon: const Icon(Icons.refresh, size: 24),
                     onPressed: () => setState(() {}),
                   ),
                   const Spacer(),
 
-                  // Conditional Batch Buttons render if items selected > 1
+                  // Batch action buttons - only show when multiple selected
                   if (_selectedStudentIds.length > 1) ...[
+                    // Bulk notify button
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(6),
@@ -446,7 +453,6 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                           actionButtonText: 'NOTIFY',
                           actionButtonColor: Colors.blue.shade800,
                           onConfirm: () async {
-                            // 👈 Hooked sequential asynchronous dispatch call for bulk checkbox rows
                             await _processBulkNotificationEmails();
                             _showSuccessModal(
                               Icons.notifications_active_outlined,
@@ -458,6 +464,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                       },
                     ),
                     const SizedBox(width: 8),
+                    // Bulk block button
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(6),
@@ -489,12 +496,12 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
               ),
               const SizedBox(height: 8),
 
-              // Table Content Matrix Headers Row Labels
+              // Table headers
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Row(
                   children: const [
-                    SizedBox(width: 32), // Checkbox width padding spacer
+                    SizedBox(width: 32),
                     Expanded(
                       flex: 3,
                       child: Text(
@@ -544,7 +551,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
               ),
               const Divider(thickness: 1.5, color: Colors.black87),
 
-              // Realtime Stream Database Render Engine
+              // Stream builder for real-time student data
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
@@ -558,7 +565,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
 
                     final rawDocs = snapshot.data!.docs;
 
-                    // Execute future calculation filtering and update view array safely
+                    // Calculate balances and filter only unpaid students
                     return FutureBuilder<List<QueryDocumentSnapshot>>(
                       future: Future.wait(
                         rawDocs.map((doc) async {
@@ -581,7 +588,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
 
                         final studentDocs = futureSnapshot.data!;
 
-                        // Local runtime search bar filtering assignment matches
+                        // Apply search filter locally
                         _currentFilteredStudents = studentDocs.where((doc) {
                           final data = doc.data() as Map<String, dynamic>;
                           final name =
@@ -624,6 +631,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                               ),
                               child: Row(
                                 children: [
+                                  // Individual student checkbox
                                   Checkbox(
                                     value: _selectedStudentIds.contains(
                                       matricId,
@@ -639,7 +647,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                     },
                                   ),
 
-                                  // Name column layout region text
+                                  // Student name
                                   Expanded(
                                     flex: 3,
                                     child: Text(
@@ -653,7 +661,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                     ),
                                   ),
 
-                                  // Sponsor display
+                                  // Sponsor - orange if none
                                   Expanded(
                                     flex: 2,
                                     child: Text(
@@ -669,7 +677,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                     ),
                                   ),
 
-                                  // Hardcoded placeholder days tracker matched to mock template specs
+                                  // Days unsettled placeholder
                                   Expanded(
                                     flex: 2,
                                     child: const Text(
@@ -683,12 +691,13 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                     ),
                                   ),
 
-                                  // Dual functional interaction buttons stack region configuration
+                                  // Action buttons: Notify and Block/Unblock
                                   Expanded(
                                     flex: 2,
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
+                                        // Notify button
                                         SizedBox(
                                           width: 65,
                                           height: 24,
@@ -707,7 +716,6 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                               double bal =
                                                   await _calculateStudentSemBalance(
                                                       matricId);
-                                              // 👈 Hooked direct operational asynchronous call for single student item
                                               await _sendLiveEmailReminder(
                                                 targetName: name,
                                                 targetEmail: studentEmail,
@@ -732,6 +740,7 @@ class _UnpaidStuListState extends State<UnpaidStuList> {
                                           ),
                                         ),
                                         const SizedBox(height: 4),
+                                        // Block/Unblock toggle button
                                         SizedBox(
                                           width: 65,
                                           height: 24,

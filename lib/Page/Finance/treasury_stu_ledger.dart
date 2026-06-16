@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// =============================================================================
+// TreasuryStuLedger - Displays student's financial ledger with payment history
+// Shows receipt records, running balances, and current semester fee status
+// =============================================================================
 class TreasuryStuLedger extends StatefulWidget {
-  final String
-      matricId; // Expects the passed student ID from the previous selection list
+  final String matricId; // Student ID passed from previous selection screen
 
   const TreasuryStuLedger({super.key, required this.matricId});
 
@@ -17,6 +20,7 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+      // Custom gradient app bar with student management title
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(140.0),
         child: AppBar(
@@ -62,6 +66,7 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
             topRight: Radius.circular(24.0),
           ),
         ),
+        // Fetch student profile first, then load receipt stream
         child: FutureBuilder<DocumentSnapshot>(
           future: FirebaseFirestore.instance
               .collection('users')
@@ -80,18 +85,17 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
             final studentData =
                 studentSnapshot.data!.data() as Map<String, dynamic>;
 
-            // Dynamic Stream sorted strictly by timestamp oldest-to-newest
+            // Stream receipts sorted chronologically (oldest to newest)
+            // This ensures running balance calculation is accurate
             return StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
                   .doc(widget.matricId)
                   .collection('receipts')
-                  .orderBy(
-                    'timestamp',
-                    descending: false,
-                  ) // 1. Chronological Sorting Fix
+                  .orderBy('timestamp', descending: false)
                   .snapshots(),
               builder: (context, receiptSnapshot) {
+                // Accumulators for summary totals
                 double totalReceivedAllSemesters = 0.0;
                 double currentSemReceivedAccumulator = 0.0;
                 double totalRefundAccumulator = 0.0;
@@ -112,13 +116,14 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                     totalReceivedAllSemesters += amount;
                     totalRefundAccumulator += refund;
 
+                    // Track current semester payments specifically
                     if (semStr == 'SEM II 25/26' || semStr == 'SEM 2 25/26') {
                       currentSemReceivedAccumulator += amount;
                     }
                   }
                 }
 
-                // Header info row tracking parameter
+                // Calculate remaining fee for current semester (1510 fixed fee)
                 double calculatedCurrentTotalFee =
                     1510.0 - currentSemReceivedAccumulator;
                 if (calculatedCurrentTotalFee < 0)
@@ -129,6 +134,7 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Page title
                       const Center(
                         child: Text(
                           'Student Ledger',
@@ -139,6 +145,8 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // Student information section
                       _buildLedgerRow('Name', studentData['name'] ?? 'N/A'),
                       _buildLedgerRow('Matric ID', widget.matricId),
                       _buildLedgerRow('Email', studentData['email'] ?? 'N/A'),
@@ -161,6 +169,8 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                         'RM ${calculatedCurrentTotalFee.toStringAsFixed(2)}',
                       ),
                       const SizedBox(height: 32),
+
+                      // Payment history table
                       Table(
                         border: TableBorder.all(color: Colors.grey.shade400),
                         columnWidths: const {
@@ -172,6 +182,7 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                           5: FlexColumnWidth(1.0),
                         },
                         children: [
+                          // Table header row
                           TableRow(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
@@ -185,9 +196,9 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                               _TableCellHeader('Refund'),
                             ],
                           ),
-
-                          //  2. ROLLING LEDGER GENERATOR IMPLEMENTATION
+                          // Receipt rows with rolling balance calculation
                           ...(() {
+                            // Running balance starts at full semester fee
                             double runningSem2FeeBalance = 1510.0;
 
                             return receiptDocs.map((doc) {
@@ -203,13 +214,14 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
 
                               double displayRowBalance = 0.0;
 
+                              // Only calculate running balance for current semester
                               if (semStr == 'SEM II 25/26' ||
                                   semStr == 'SEM 2 25/26') {
                                 runningSem2FeeBalance -= singleReceived;
                                 displayRowBalance = runningSem2FeeBalance;
                               } else {
-                                displayRowBalance =
-                                    0.00; // Old historical records fall cleanly to clear state
+                                // Historical records show 0 balance
+                                displayRowBalance = 0.00;
                               }
 
                               if (displayRowBalance < 0)
@@ -217,6 +229,7 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
 
                               return TableRow(
                                 children: [
+                                  // Receipt number - clickable to open document
                                   TableCell(
                                     verticalAlignment:
                                         TableCellVerticalAlignment.middle,
@@ -293,8 +306,7 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                               );
                             }).toList();
                           })(),
-
-                          // Footer Row Summary Sections
+                          // Footer summary row with totals
                           TableRow(
                             children: [
                               const TableCell(child: SizedBox()),
@@ -315,8 +327,6 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
                                 totalReceivedAllSemesters.toStringAsFixed(2),
                                 isBold: true,
                               ),
-
-                              //  3. DYNAMIC FOOTER TOTALS FIX: Displays the accurate remaining balance
                               _TableCellText(
                                 calculatedCurrentTotalFee.toStringAsFixed(2),
                                 isBold: true,
@@ -342,8 +352,9 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
     );
   }
 
-  // --- REUSABLE BUILDER SEPARATIONS COMPONENT BLOCKS ---
-
+  // ---------------------------------------------------------------------------
+  // Helper: Standard row builder for student info display
+  // ---------------------------------------------------------------------------
   Widget _buildLedgerRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -368,6 +379,9 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Helper: Fee row with red colored amount display
+  // ---------------------------------------------------------------------------
   Widget _buildFeeRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -393,6 +407,9 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Helper: Status row with color coding (green = NOT BLOCKED, red = BLOCKED)
+  // ---------------------------------------------------------------------------
   Widget _buildStatusRow(String label, String value) {
     String cleanValue = value.trim().toUpperCase();
     Color statusColor = Colors.grey;
@@ -428,6 +445,9 @@ class _TreasuryStuLedgerState extends State<TreasuryStuLedger> {
   }
 }
 
+// =============================================================================
+// _TableCellHeader - Bold header cell for table columns
+// =============================================================================
 class _TableCellHeader extends StatelessWidget {
   final String text;
   const _TableCellHeader(this.text);
@@ -444,6 +464,9 @@ class _TableCellHeader extends StatelessWidget {
   }
 }
 
+// =============================================================================
+// _TableCellText - Standard table cell with optional bold and color styling
+// =============================================================================
 class _TableCellText extends StatelessWidget {
   final String text;
   final bool isBold;

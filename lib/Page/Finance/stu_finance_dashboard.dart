@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'stu_payment.dart';
 
+// StuFinanceDashboard - Main finance screen for students
+// Shows payment dashboard and transaction records with toggle view
 class StuFinanceDashboard extends StatefulWidget {
   final String loggedInStudentMatricId;
 
@@ -16,7 +18,7 @@ class StuFinanceDashboard extends StatefulWidget {
 }
 
 class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
-  bool _showRecordView = false;
+  bool _showRecordView = false; // Toggle between Payment and Record views
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+      // Custom gradient app bar with title and logo
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(140.0),
         child: AppBar(
@@ -45,6 +48,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
           ),
           centerTitle: true,
           actions: [
+            // University logo
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
               child: Container(
@@ -88,11 +92,11 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
             topRight: Radius.circular(24.0),
           ),
         ),
+        // Fetch student profile first
         child: FutureBuilder<DocumentSnapshot>(
           future: FirebaseFirestore.instance
               .collection('users')
-              .doc(
-                  currentStudentMatricId) // Automatically fetches students document profile
+              .doc(currentStudentMatricId)
               .get(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
@@ -109,6 +113,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
 
             final studentData = snapshot.data!.data() as Map<String, dynamic>;
 
+            // Stream receipts sorted chronologically
             return StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('users')
@@ -117,6 +122,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
                   .orderBy('timestamp', descending: false)
                   .snapshots(),
               builder: (context, receiptSnapshot) {
+                // Accumulators for totals
                 double totalReceivedAllSemesters = 0.0;
                 double currentSemReceivedAccumulator = 0.0;
                 double totalRefundAccumulator = 0.0;
@@ -137,12 +143,14 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
                     totalReceivedAllSemesters += amount;
                     totalRefundAccumulator += refund;
 
+                    // Track current semester payments specifically
                     if (semStr == 'SEM II 25/26' || semStr == 'SEM 2 25/26') {
                       currentSemReceivedAccumulator += amount;
                     }
                   }
                 }
 
+                // Calculate remaining fee for current semester
                 double calculatedCurrentTotalFee =
                     1510.0 - currentSemReceivedAccumulator;
                 if (calculatedCurrentTotalFee < 0) {
@@ -161,7 +169,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
                       ),
                       const SizedBox(height: 12),
 
-                      // --- TAB TOGGLE SELECTION NAVIGATION ROW ---
+                      // Tab toggle navigation between Payment and Record views
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -208,9 +216,10 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
                       ),
                       const SizedBox(height: 24),
 
+                      // Conditional rendering based on selected tab
                       _showRecordView
                           ? _buildRecordView(
-                              currentStudentMatricId, // 👈 Pass down dynamically
+                              currentStudentMatricId,
                               studentData,
                               receiptDocs,
                               totalReceivedAllSemesters,
@@ -218,7 +227,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
                               totalRefundAccumulator,
                             )
                           : _buildPaymentDashboardView(
-                              currentStudentMatricId, // 👈 Pass down dynamically
+                              currentStudentMatricId,
                               calculatedCurrentTotalFee,
                               studentData['status'] ?? 'NOT BLOCKED',
                             ),
@@ -233,10 +242,12 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
     );
   }
 
+  // Payment dashboard view - shows outstanding balance and pay button
   Widget _buildPaymentDashboardView(
       String matricId, double unpaidBalance, String statusValue) {
     return Column(
       children: [
+        // Gradient card displaying unsettled total
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
@@ -273,6 +284,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
           ),
         ),
         const SizedBox(height: 24),
+        // Status display with color coding
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -293,6 +305,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
           ],
         ),
         const SizedBox(height: 40),
+        // Pay button - navigates to payment screen
         SizedBox(
           width: 180,
           height: 48,
@@ -324,6 +337,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
     );
   }
 
+  // Record view - shows detailed ledger with transaction history
   Widget _buildRecordView(
     String matricId,
     Map<String, dynamic> data,
@@ -335,10 +349,12 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Student information rows
         _buildLedgerRow('Name', data['name'] ?? 'N/A'),
-        _buildLedgerRow('Matric ID', matricId), // 👈 Dynamic display
+        _buildLedgerRow('Matric ID', matricId),
         _buildLedgerRow('Email', data['email'] ?? 'N/A'),
         _buildLedgerRow('Contact Number', data['contact'] ?? 'N/A'),
+        // Status row with color coding
         Row(
           children: [
             const SizedBox(
@@ -363,6 +379,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
         _buildLedgerRow('Sponsor', data['sponsor'] ?? 'NONE'),
         _buildLedgerRow('Bank Number', data['bankNumber'] ?? 'N/A'),
         _buildLedgerRow('Bank', data['bankName'] ?? 'N/A'),
+        // Current total fee row
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Row(
@@ -384,6 +401,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
           ),
         ),
         const SizedBox(height: 24),
+        // Transaction history table
         Table(
           border: TableBorder.all(color: Colors.grey.shade400),
           columnWidths: const {
@@ -395,6 +413,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
             5: FlexColumnWidth(1.0),
           },
           children: [
+            // Table header
             TableRow(
               decoration: BoxDecoration(color: Colors.grey.shade50),
               children: const [
@@ -406,6 +425,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
                 _TableCellHeader('Refund'),
               ],
             ),
+            // Receipt rows with rolling balance calculation
             ...(() {
               double runningSem2FeeBalance = 1510.0;
 
@@ -419,6 +439,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
 
                 double displayRowBalance = 0.0;
 
+                // Only calculate running balance for current semester
                 if (semStr == 'SEM II 25/26' || semStr == 'SEM 2 25/26') {
                   runningSem2FeeBalance -= singleReceived;
                   displayRowBalance = runningSem2FeeBalance;
@@ -430,6 +451,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
 
                 return TableRow(
                   children: [
+                    // Receipt number - clickable to open document
                     TableCell(
                       verticalAlignment: TableCellVerticalAlignment.middle,
                       child: InkWell(
@@ -483,6 +505,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
                 );
               }).toList();
             })(),
+            // Footer summary row
             TableRow(
               children: [
                 const TableCell(child: SizedBox()),
@@ -508,6 +531,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
     );
   }
 
+  // Helper: Standard row builder for student info display
   Widget _buildLedgerRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -530,6 +554,7 @@ class _StuFinanceDashboardViewState extends State<StuFinanceDashboard> {
   }
 }
 
+// Reusable table header cell
 class _TableCellHeader extends StatelessWidget {
   final String text;
   const _TableCellHeader(this.text);
@@ -544,6 +569,7 @@ class _TableCellHeader extends StatelessWidget {
   }
 }
 
+// Reusable table text cell with optional bold and color
 class _TableCellText extends StatelessWidget {
   final String text;
   final bool isBold;
