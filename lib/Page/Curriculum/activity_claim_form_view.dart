@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Page for student to submit curriculum activity claim
 class ActivityClaimFormView extends StatefulWidget {
   const ActivityClaimFormView({super.key});
 
@@ -11,16 +12,21 @@ class ActivityClaimFormView extends StatefulWidget {
 }
 
 class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
+  // Controllers for form input fields
   final studentIdController = TextEditingController();
   final activityNameController = TextEditingController();
   final activityDateController = TextEditingController();
   final durationController = TextEditingController();
   final descriptionController = TextEditingController();
 
+  // Variables to store selected supporting file information
   String? selectedFileName;
   String? selectedFilePath;
+
+  // Variable to prevent multiple submissions at the same time
   bool isSubmitting = false;
 
+  // Generate a clean document ID from activity name
   String makeDocId(String activityName) {
     return activityName
         .toLowerCase()
@@ -30,12 +36,14 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
         .replaceAll(RegExp(r'^_|_$'), '');
   }
 
+  // Allow user to select supporting document from device
   Future<void> pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
     );
 
+    // Save selected file name and file path
     if (result != null) {
       setState(() {
         selectedFileName = result.files.single.name;
@@ -44,6 +52,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
     }
   }
 
+  // Open date picker to select activity date
   Future<void> pickActivityDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -52,15 +61,18 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
       lastDate: DateTime(2035),
     );
 
+    // Display selected date in the text field
     if (pickedDate != null) {
       setState(() {
         activityDateController.text =
-        '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
+            '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
       });
     }
   }
 
+  // Submit claim data to Firestore
   Future<void> submitClaim() async {
+    // Validate all required fields before submission
     if (studentIdController.text.isEmpty ||
         activityNameController.text.isEmpty ||
         activityDateController.text.isEmpty ||
@@ -75,6 +87,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
       return;
     }
 
+    // Set submit button into loading mode
     setState(() {
       isSubmitting = true;
     });
@@ -83,8 +96,10 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
       final studentId = studentIdController.text.trim();
       final activityName = activityNameController.text.trim();
 
+      // Create unique document ID using student ID and activity name
       final docId = '${studentId}_${makeDocId(activityName)}';
 
+      // Save activity claim data into Firestore
       await FirebaseFirestore.instance
           .collection('curriculum_claims')
           .doc(docId)
@@ -94,24 +109,33 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
         'activity_date': activityDateController.text.trim(),
         'duration_hours': durationController.text.trim(),
         'description': descriptionController.text.trim(),
+
+        // Save supporting document information
         'supporting_file_name': selectedFileName,
         'supporting_file_path': selectedFilePath,
+
+        // Set default claim status as pending review
         'status': 'PENDING',
+
+        // Store submission date and time
         'submitted_at': FieldValue.serverTimestamp(),
       });
 
+      // Reset submit state and selected file
       setState(() {
         isSubmitting = false;
         selectedFileName = null;
         selectedFilePath = null;
       });
 
+      // Clear all form input fields after successful submission
       studentIdController.clear();
       activityNameController.clear();
       activityDateController.clear();
       durationController.clear();
       descriptionController.clear();
 
+      // Display success dialog after claim is submitted
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -125,6 +149,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Success icon
                   Container(
                     width: 70,
                     height: 70,
@@ -138,7 +163,10 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
                       size: 42,
                     ),
                   ),
+
                   const SizedBox(height: 20),
+
+                  // Success message
                   const Text(
                     'New activity claim added\nsuccessfully. Status:\nPending Review.',
                     textAlign: TextAlign.center,
@@ -149,7 +177,10 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
                       height: 1.3,
                     ),
                   ),
+
                   const SizedBox(height: 25),
+
+                  // Close dialog and return to previous page
                   SizedBox(
                     width: 115,
                     height: 42,
@@ -181,10 +212,12 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
         },
       );
     } catch (e) {
+      // Stop loading state if error occurs
       setState(() {
         isSubmitting = false;
       });
 
+      // Display error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error submit claim: $e'),
@@ -195,6 +228,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
 
   @override
   void dispose() {
+    // Dispose controllers to avoid memory leaks
     studentIdController.dispose();
     activityNameController.dispose();
     activityDateController.dispose();
@@ -203,6 +237,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
     super.dispose();
   }
 
+  // Reusable label widget for form fields
   Widget _buildLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -217,6 +252,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
     );
   }
 
+  // Reusable text field widget
   Widget _buildTextField({
     required TextEditingController controller,
     double height = 50,
@@ -239,9 +275,9 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
             suffixIcon: suffixIcon == null
                 ? null
                 : Icon(
-              suffixIcon,
-              color: const Color(0xFF11A06E),
-            ),
+                    suffixIcon,
+                    color: const Color(0xFF11A06E),
+                  ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 10,
@@ -276,12 +312,16 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
+
+          // Menu button to return to previous page
           leading: IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () {
               Navigator.pop(context);
             },
           ),
+
+          // App bar title
           title: const Text(
             'CURRICULUM ACTIVITY\nCLAIM',
             textAlign: TextAlign.center,
@@ -292,7 +332,10 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
               height: 1.2,
             ),
           ),
+
           centerTitle: true,
+
+          // UMPSA logo
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -302,6 +345,8 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
               ),
             ),
           ],
+
+          // Green gradient app bar background
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -317,6 +362,8 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
           ),
         ),
       ),
+
+      // Main form body
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -332,12 +379,15 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Student ID input
                 _buildLabel('Student ID'),
                 _buildTextField(controller: studentIdController),
 
+                // Activity name input
                 _buildLabel('Activity Name'),
                 _buildTextField(controller: activityNameController),
 
+                // Activity date input
                 _buildLabel('Activity Date'),
                 _buildTextField(
                   controller: activityDateController,
@@ -346,9 +396,11 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
                   suffixIcon: Icons.calendar_month,
                 ),
 
+                // Duration input
                 _buildLabel('Duration (Hours)'),
                 _buildTextField(controller: durationController),
 
+                // Description input
                 _buildLabel('Description'),
                 _buildTextField(
                   controller: descriptionController,
@@ -357,6 +409,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
 
                 const SizedBox(height: 15),
 
+                // Supporting document section title
                 const Text(
                   'Attach Supporting Document',
                   style: TextStyle(fontSize: 16, color: Colors.black),
@@ -364,6 +417,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
 
                 const SizedBox(height: 12),
 
+                // Upload supporting document button
                 SizedBox(
                   width: double.infinity,
                   height: 45,
@@ -392,6 +446,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
                   ),
                 ),
 
+                // Display selected file name after upload
                 if (selectedFileName != null) ...[
                   const SizedBox(height: 10),
                   Container(
@@ -428,6 +483,7 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
 
                 const SizedBox(height: 40),
 
+                // Submit button container with gradient background
                 Container(
                   width: double.infinity,
                   height: 55,
@@ -447,6 +503,8 @@ class _ActivityClaimFormViewState extends State<ActivityClaimFormView> {
                       ),
                     ],
                   ),
+
+                  // Submit button
                   child: ElevatedButton.icon(
                     onPressed: isSubmitting ? null : submitClaim,
                     style: ElevatedButton.styleFrom(
