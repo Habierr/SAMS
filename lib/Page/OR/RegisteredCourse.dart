@@ -22,13 +22,19 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     super.dispose();
   }
 
+  // Data processing pipeline that groups flat database records by their unique subject codes
   List<_SubjectEntry> _groupBySubject(List<CourseRegistrationRecord> records) {
     final Map<String, _SubjectEntry> map = {};
     for (final r in records) {
+      // Exclude documents that have been modified to a dropped system status state
       if (r.regStatus == 'Dropped') continue;
+
+      // Instantiate a unified row entry container if the subject code hasn't been mapped yet
       if (!map.containsKey(r.subCode)) {
         map[r.subCode] = _SubjectEntry(subCode: r.subCode);
       }
+
+      // Separate components based on class type to allow dual lecture/secondary item pairing rows
       if (r.isLecture) {
         map[r.subCode]!.lecture = r;
       } else {
@@ -38,6 +44,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     return map.values.toList();
   }
 
+  // Runtime conditional filter matrix checking against course codes, titles, or instructor profiles
   List<_SubjectEntry> _filter(List<_SubjectEntry> entries) {
     if (_searchQuery.isEmpty) return entries;
     final q = _searchQuery.toLowerCase();
@@ -50,10 +57,12 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     }).toList();
   }
 
+  // Asynchronous transactional flow handling course deletion lifecycle confirmations
   Future<void> _onDrop(_SubjectEntry entry) async {
     final subCode = entry.lecture?.subCode ?? entry.secondary?.subCode ?? '';
     final subName = entry.lecture?.subName ?? entry.secondary?.subName ?? '';
 
+    // Wireframe modal guardrail to verify user operational intent
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -87,6 +96,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
       ),
     );
 
+    // Context execution gate verifying widget state viability before writing database mutations
     if (confirm == true && mounted) {
       final error = await context.read<ORController>().dropSubject(subCode);
       if (!mounted) return;
@@ -97,8 +107,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     }
   }
 
-  //  Edit
-
+  // Navigation transition routine constructing runtime parameters to hand off to the Edit module
   void _onEdit(_SubjectEntry entry) {
     final ctrl = context.read<ORController>();
     final rec = entry.lecture ?? entry.secondary;
@@ -111,12 +120,14 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
       faculty: '',
     );
 
+    // Queries active state listings matching current parameters to populate alternate sections menu
     final offerings =
         ctrl.activeOfferings.where((o) => o.subCode == rec.subCode).toList();
 
     final currentLectSectID = entry.lecture?.sectID ?? '';
     final currentSecSectID = entry.secondary?.sectID ?? '';
 
+    // Route handshake maintaining provider state compatibility variables transparently
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -133,6 +144,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     );
   }
 
+  // Extends registration state variables down into supplemental session route frames
   void _onAddMore() {
     final ctrl = context.read<ORController>();
 
@@ -151,6 +163,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
     );
   }
 
+  // Reusable notification toast banner component layout structure
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -170,6 +183,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
       backgroundColor: const Color(0xFFF2F4F7),
       body: Consumer<ORController>(
         builder: (context, ctrl, _) {
+          // Reactive variables processing layout updates matching asynchronous state mutations
           final semLabel = ctrl.activeSession?.semester ?? 'Sem 2 2025/2026';
           final entries = _groupBySubject(ctrl.studentRegistrations);
           final filtered = _filter(entries);
@@ -204,6 +218,8 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
       ),
     );
   }
+
+  // ── Structural Layout Rendering Components ──
 
   Widget _buildHeader(String semLabel) {
     return Container(
@@ -429,6 +445,7 @@ class _RegisteredCourseState extends State<RegisteredCourse> {
   }
 }
 
+// Internal programmatic data transfer model acting as a dictionary pairing for child components
 class _SubjectEntry {
   final String subCode;
   CourseRegistrationRecord? lecture;
@@ -436,6 +453,7 @@ class _SubjectEntry {
 
   _SubjectEntry({required this.subCode});
 
+  // Dynamic label combiner formatting paired lecture and lab sections (e.g., 01/01A)
   String get sectDisplay {
     final l = lecture?.sectNo ?? '';
     final s = secondary?.sectNo ?? '';

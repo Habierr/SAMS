@@ -18,6 +18,7 @@ class EditOR extends StatefulWidget {
 }
 
 class _EditORState extends State<EditOR> {
+  // Key used to trigger validation state flags across child fields prior to Firebase update writes
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _sectNoCtrl;
@@ -37,6 +38,7 @@ class _EditORState extends State<EditOR> {
   @override
   void initState() {
     super.initState();
+    // Initialize controller view buffers with current database document parameter records
     _sectNoCtrl = TextEditingController(text: widget.offering.sectNo);
     _quotaCtrl = TextEditingController(text: widget.offering.quota.toString());
     _lectNameCtrl = TextEditingController(text: widget.offering.lectName);
@@ -44,13 +46,14 @@ class _EditORState extends State<EditOR> {
     _endTimeCtrl = TextEditingController(text: widget.offering.endTime);
     _venueCtrl = TextEditingController(text: widget.offering.venue);
 
-    // Normalize classType — match to list, fallback to first
+    // Case-insensitive normalization mapping incoming string variables against the strict dropdown arrays
     final normalized = widget.offering.classType.trim();
     _classType = _classTypes.firstWhere(
       (t) => t.toLowerCase() == normalized.toLowerCase(),
       orElse: () => _classTypes.first,
     );
 
+    // Parses the comma-separated day strings stored in the database back into a clean selectable List array
     _selectedDays = widget.offering.days
         .split(',')
         .map((d) => d.trim())
@@ -60,6 +63,7 @@ class _EditORState extends State<EditOR> {
 
   @override
   void dispose() {
+    // Terminate controller listeners manually to completely clear system memory on page exit
     _sectNoCtrl.dispose();
     _quotaCtrl.dispose();
     _lectNameCtrl.dispose();
@@ -69,6 +73,7 @@ class _EditORState extends State<EditOR> {
     super.dispose();
   }
 
+  // Database update operation handler bundling modified fields into the state repository provider
   Future<void> _updateOffering() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDays.isEmpty) {
@@ -84,6 +89,7 @@ class _EditORState extends State<EditOR> {
 
     setState(() => _isSaving = true);
 
+    // Build the updated domain object model while preserving immutable identifiers like section IDs
     final updatedOffering = OfferingRegistration(
       sectID: widget.offering.sectID,
       subCode: widget.offering.subCode,
@@ -94,7 +100,8 @@ class _EditORState extends State<EditOR> {
       enrolled: widget.offering.enrolled,
       lectName:
           _lectNameCtrl.text.trim().isEmpty ? 'TBA' : _lectNameCtrl.text.trim(),
-      days: _selectedDays.join(', '),
+      days: _selectedDays.join(
+          ', '), // Flattens tracking array back into a unified string block for Firestore
       startTime: _startTimeCtrl.text.trim(),
       endTime: _endTimeCtrl.text.trim(),
       venue: _venueCtrl.text.trim().isEmpty ? 'TBA' : _venueCtrl.text.trim(),
@@ -102,11 +109,13 @@ class _EditORState extends State<EditOR> {
       session: widget.offering.session,
     );
 
+    // Dispatch the payload down to the remote Firebase update service via the controller pattern
     final controller = Provider.of<ORController>(context, listen: false);
     await controller.updateOffering(widget.offeringDocId, updatedOffering);
 
     setState(() => _isSaving = false);
 
+    // Safely exit scope if context remains alive, pushing a truthy indicator to notify list observers
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -119,7 +128,7 @@ class _EditORState extends State<EditOR> {
     }
   }
 
-  // ── Reusable labelled text field ───────────────────────────────────────────
+  // Reusable text layout field constructor to keep the form fields consistent
   Widget _buildField({
     required TextEditingController controller,
     required String label,
@@ -178,7 +187,7 @@ class _EditORState extends State<EditOR> {
     );
   }
 
-  // ── White card with blue title ─────────────────────────────────────────────
+  // Interface styling wrapper designed to package inputs within discrete white cards
   Widget _buildCard({required String title, required Widget child}) {
     return Container(
       width: double.infinity,
@@ -218,7 +227,7 @@ class _EditORState extends State<EditOR> {
       backgroundColor: const Color(0xFFEEF3F7),
       body: Column(
         children: [
-          // ── Gradient Header ────────────────────────────────────────────────
+          // ── Gradient Header UI Element ──
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -234,13 +243,13 @@ class _EditORState extends State<EditOR> {
                 padding: const EdgeInsets.fromLTRB(4, 6, 16, 16),
                 child: Row(
                   children: [
-                    // Menu / back icon
+                    // Back navigation button
                     IconButton(
                       icon: const Icon(Icons.arrow_back_ios_new,
                           color: Colors.white, size: 20),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    // Title + subtitle
+                    // Course details heading panel layout blocks
                     Expanded(
                       child: Column(
                         children: [
@@ -263,7 +272,7 @@ class _EditORState extends State<EditOR> {
                         ],
                       ),
                     ),
-                    // University logo placeholder
+                    // University decoration logo card element
                     Container(
                       width: 42,
                       height: 42,
@@ -280,7 +289,7 @@ class _EditORState extends State<EditOR> {
             ),
           ),
 
-          // ── Scrollable body ────────────────────────────────────────────────
+          // ── Scrollable form entry layout canvas ──
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -288,13 +297,13 @@ class _EditORState extends State<EditOR> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // ── Card 1: Class ────────────────────────────────────────
+                    // ── Card 1: Class Type Selector ──
                     _buildCard(
                       title: 'Class',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Dropdown for class type
+                          // Dropdown selector handling class component categories
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 14, vertical: 2),
@@ -336,7 +345,7 @@ class _EditORState extends State<EditOR> {
                     ),
                     const SizedBox(height: 12),
 
-                    // ── Card 2: Section Details ──────────────────────────────
+                    // ── Card 2: Section Attributes form rows ──
                     _buildCard(
                       title: 'Section details',
                       child: Column(
@@ -372,13 +381,12 @@ class _EditORState extends State<EditOR> {
                     ),
                     const SizedBox(height: 12),
 
-                    // ── Card 3: Class Schedule ───────────────────────────────
+                    // ── Card 3: Class Schedule configuration matrix ──
                     _buildCard(
                       title: 'Class schedule',
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Days label
                           const Text(
                             'Days',
                             style: TextStyle(
@@ -388,7 +396,7 @@ class _EditORState extends State<EditOR> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          // Day chips
+                          // Multi-selection wrapping weekday toggle chips
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -426,7 +434,6 @@ class _EditORState extends State<EditOR> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Time label
                           const Text(
                             'Time',
                             style: TextStyle(
@@ -436,7 +443,7 @@ class _EditORState extends State<EditOR> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Time row
+                          // Class time bounds input row setup
                           Row(
                             children: [
                               Expanded(
@@ -513,7 +520,7 @@ class _EditORState extends State<EditOR> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Venue
+                          // Venue location row item
                           _buildField(
                             controller: _venueCtrl,
                             label: 'Venue',
@@ -524,10 +531,10 @@ class _EditORState extends State<EditOR> {
                     ),
                     const SizedBox(height: 28),
 
-                    // ── Bottom Buttons ───────────────────────────────────────
+                    // ── Bottom structural action confirm button row wrappers ──
                     Row(
                       children: [
-                        // Update
+                        // Save modification trigger action button
                         Expanded(
                           child: ElevatedButton(
                             onPressed: _isSaving ? null : _updateOffering,
@@ -559,7 +566,7 @@ class _EditORState extends State<EditOR> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Cancel
+                        // Screen exit cancel item
                         Expanded(
                           child: OutlinedButton(
                             onPressed:

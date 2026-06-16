@@ -15,12 +15,16 @@ class RegistrarDashboard extends StatefulWidget {
 }
 
 class _RegistrarDashboardState extends State<RegistrarDashboard> {
+  // Scaffold key to programmatically trigger the sidebar drawer from the app bar
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  // Track grid cell press events for feedback styling mutations
   int _pressedIndex = -1;
 
   @override
   void initState() {
     super.initState();
+    // Safe framing callback initializing core datasets immediately after the first frame render completes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = Provider.of<ORController>(context, listen: false);
       controller.initializeData();
@@ -30,15 +34,18 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
+      key:
+          _scaffoldKey, // Bind state key to access scaffold actions across child view scopes
       backgroundColor: const Color(0xFFF0F4F8),
+
+      // Sidebar navigational overlay menu pane configuration
       drawer: Drawer(
         child: Column(
           children: [
             UserAccountsDrawerHeader(
               decoration: const BoxDecoration(
                 color: Color(
-                    0xFF1A5F7A), // Matches her dashboard signature layout profile color
+                    0xFF1A5F7A), // Master theme signature header backdrop color
               ),
               currentAccountPicture: const CircleAvatar(
                 backgroundColor: Colors.white,
@@ -62,14 +69,15 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
                   color: Color(0xFF1A5F7A)),
               title: const Text('Dashboard Home'),
               onTap: () =>
-                  Navigator.pop(context), // Closes side bar drawer overlay
+                  Navigator.pop(context), // Dismiss drawer overlay sheet view
             ),
             ListTile(
               leading: const Icon(Icons.assignment_outlined,
                   color: Color(0xFF1A5F7A)),
               title: const Text('Subject Management'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(
+                    context); // Close drawer menu prior to routing transitions
                 Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -116,7 +124,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
                     TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
               ),
               onTap: () {
-                // Clear state scopes completely and return user safely back to Login screen bounds
+                // Clear active navigation trees and reset routing stack straight back to Login
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => const Login()),
@@ -146,7 +154,8 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
         leading: IconButton(
           icon: const Icon(Icons.menu, size: 24, color: Colors.white),
           onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
+            _scaffoldKey.currentState
+                ?.openDrawer(); // Programmatic sidebar invocation call
           },
           splashRadius: 20,
         ),
@@ -158,6 +167,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
               height: 36,
               width: 36,
               errorBuilder: (context, error, stackTrace) {
+                // Circular vector backup icon falls into place if local image path throws anomalies
                 return Container(
                   height: 36,
                   width: 36,
@@ -178,6 +188,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
       ),
       body: Consumer<ORController>(
         builder: (context, controller, child) {
+          // Present loading indicator if background data synchronization actions are running
           if (controller.isLoading) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFF1A5F7A)),
@@ -248,6 +259,7 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
     );
   }
 
+  // Maps label entities directly to their target dashboard interface screens
   Widget _buildQuickActionGrid(BuildContext context) {
     final actions = [
       {'label': 'Subject\nManagement', 'page': const SubjectManagement()},
@@ -258,7 +270,8 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
 
     return GridView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+      physics:
+          const NeverScrollableScrollPhysics(), // Disables independent list scrolling inside scrolling parents
       itemCount: actions.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -268,9 +281,11 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
       ),
       itemBuilder: (context, index) {
         return GestureDetector(
-          onTapDown: (_) => setState(() => _pressedIndex = index),
+          onTapDown: (_) => setState(() => _pressedIndex =
+              index), // Capture index to deploy active card tap color
           onTapUp: (_) {
-            setState(() => _pressedIndex = -1);
+            setState(() => _pressedIndex =
+                -1); // Reset feedback parameters cleanly on touch lift
             final page = actions[index]['page'] as Widget?;
             if (page != null) {
               Navigator.push(
@@ -284,8 +299,8 @@ class _RegistrarDashboardState extends State<RegistrarDashboard> {
             duration: const Duration(milliseconds: 100),
             decoration: BoxDecoration(
               color: _pressedIndex == index
-                  ? const Color(0xFFB2D8E8)
-                  : const Color(0xFFD6EEF6),
+                  ? const Color(0xFFB2D8E8) // Highlight selection tint
+                  : const Color(0xFFD6EEF6), // Base selection tint
               borderRadius: BorderRadius.circular(30),
             ),
             alignment: Alignment.center,

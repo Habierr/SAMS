@@ -12,6 +12,7 @@ class SubjectManagement extends StatefulWidget {
 }
 
 class _SubjectManagementState extends State<SubjectManagement> {
+  // Local states tracking selected filters and raw string search parameters
   String? selectedSemester;
   String searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
@@ -25,6 +26,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
   @override
   void initState() {
     super.initState();
+    // Post-frame lifecycle callback ensures the background data pull executes cleanly after layout constraints settle
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ORController>(context, listen: false).loadData();
     });
@@ -45,7 +47,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Gradient Header ────────────────────────────────────────
+              // ── Gradient Header Layout Block ──
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -92,7 +94,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
                 ),
               ),
 
-              // ── Search bar ─────────────────────────────────────────────
+              // ── Search bar text listener wrapper ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Container(
@@ -109,7 +111,8 @@ class _SubjectManagementState extends State<SubjectManagement> {
                   ),
                   child: TextField(
                     controller: _searchController,
-                    onChanged: (value) => setState(() => searchQuery = value),
+                    onChanged: (value) => setState(() => searchQuery =
+                        value), // Re-runs filtering loop on every keystroke
                     decoration: InputDecoration(
                       hintText: 'Search',
                       hintStyle:
@@ -135,7 +138,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
               ),
               const SizedBox(height: 12),
 
-              // ── Select Semester card ───────────────────────────────────
+              // ── Select Semester configuration module ──
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
@@ -162,8 +165,6 @@ class _SubjectManagementState extends State<SubjectManagement> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // ✅ Info — semester yang dipilih akan digunakan
-                    // bila tambah offering baru (AddOR)
                     Text(
                       'Selected semester will be used when adding new sections.',
                       style: TextStyle(
@@ -177,6 +178,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
                         final bool isSelected = selectedSemester == semester;
                         return GestureDetector(
                           onTap: () {
+                            // Clear previous search state elements when switching semesters to avoid item clipping anomalies
                             setState(() {
                               selectedSemester = semester;
                               searchQuery = '';
@@ -214,7 +216,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
               ),
               const SizedBox(height: 14),
 
-              // ── Available subject label ────────────────────────────────
+              // ── Available metadata tracking descriptor banners ──
               if (selectedSemester != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -249,10 +251,11 @@ class _SubjectManagementState extends State<SubjectManagement> {
                   ),
                 ),
 
-              // ── Subject list ──────────────────────────────────────────
+              // ── Subject List Switcher ──
               Expanded(
                 child: selectedSemester != null
-                    ? _buildSubjectList(context, controller)
+                    ? _buildSubjectList(context,
+                        controller) // Render subject records list view if term state drops to truthy
                     : Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
@@ -266,7 +269,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
                       ),
               ),
 
-              // ── Add subject button ─────────────────────────────────────
+              // ── Modal action trigger pushing up the Add Subject sheet ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 child: SizedBox(
@@ -279,6 +282,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
                           builder: (context) => const AddSubject(),
                         ),
                       );
+                      // Force local cache refresh update cycles if sub-sheet tasks report true on exit
                       if (result == true) {
                         controller.loadData();
                       }
@@ -309,7 +313,9 @@ class _SubjectManagementState extends State<SubjectManagement> {
     );
   }
 
+  // ── Subject List Filter Logic Engine ──
   Widget _buildSubjectList(BuildContext context, ORController controller) {
+    // Standard validation filter loop mapping user input text values against course descriptors
     final filtered = controller.subjects.where((subject) {
       if (searchQuery.isEmpty) return true;
       return subject.subCode
@@ -358,7 +364,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Subject icon
+              // Subject icon container
               Container(
                 width: 40,
                 height: 40,
@@ -371,7 +377,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
               ),
               const SizedBox(width: 12),
 
-              // Subject info
+              // Subject metadata layout descriptions
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +403,7 @@ class _SubjectManagementState extends State<SubjectManagement> {
               ),
               const SizedBox(width: 8),
 
-              // Add button
+              // Section append trigger forwarding specific subject blueprints directly down to sub-forms
               OutlinedButton(
                 onPressed: () async {
                   final result = await Navigator.push(

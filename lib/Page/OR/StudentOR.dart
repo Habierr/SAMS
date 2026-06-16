@@ -27,10 +27,13 @@ class _StudentORState extends State<StudentOR> {
   @override
   void initState() {
     super.initState();
+    // Post-frame callback ensures the controller initializes data safely after the first UI layout build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final ctrl = context.read<ORController>();
-      ctrl.setCurrentUser(studentID: widget.studentID);
-      ctrl.processOR();
+      ctrl.setCurrentUser(
+          studentID: widget
+              .studentID); // Links the controller state to the active student ID session
+      ctrl.processOR(); // Triggers the asynchronous load routine to sync topics and active sessions
     });
   }
 
@@ -40,20 +43,21 @@ class _StudentORState extends State<StudentOR> {
     super.dispose();
   }
 
-  // viewSection
+  // Navigation routine passing down the existing state controller instance across view screens
   void _onViewSubject(
     BuildContext context,
     Subject subject,
     List<OfferingRegistration> sections,
   ) {
-    // Get the existing ORController from the current context
+    // Fetches the active state controller instance scope without subscribing to continuous build ticks
     final orController = Provider.of<ORController>(context, listen: false);
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => ChangeNotifierProvider.value(
-          value: orController, // Reuse the same controller instance
+          value:
+              orController, // Keeps the architectural scope connected by passing the exact same controller object
           child: CourseRegistration(
             subject: subject,
             offerings: sections,
@@ -79,7 +83,8 @@ class _StudentORState extends State<StudentOR> {
                           color: Color(0xFF1AAFA0),
                         ),
                       )
-                    : _buildBody(context, ctrl),
+                    : _buildBody(context,
+                        ctrl), // Direct swap over to body canvas once data sync drops to false
               ),
             ],
           );
@@ -165,6 +170,7 @@ class _StudentORState extends State<StudentOR> {
   Widget _buildBody(BuildContext context, ORController ctrl) {
     final session = ctrl.activeSession;
 
+    // Gatekeeping intercept check validating session activity statuses before displaying layout items
     if (session == null || !session.isActive) {
       return _buildEmptyState(
         icon: Icons.event_busy_outlined,
@@ -173,16 +179,16 @@ class _StudentORState extends State<StudentOR> {
       );
     }
 
-    // Group offerings by subCode untuk cari unique subjects
+    // Maps course models by subject string tokens to group multiple sections cleanly under one array block
     final offeringsBySubject = ctrl.offeringsBySubject;
 
-    // Build unique subject list dari offerings
+    // Creates an internal tracking map dictionary structure for fast data lookups on key codes
     final Map<String, Subject> subjectMap = {};
     for (final sub in ctrl.subjects) {
       subjectMap[sub.subCode] = sub;
     }
 
-    // Filter berdasarkan search
+    // Algorithmic lookup mechanism matching query strings against local cached course codes or text labels
     final query = _searchQuery.toLowerCase().trim();
     final List<String> subCodes = offeringsBySubject.keys.where((code) {
       if (query.isEmpty) return true;
@@ -255,7 +261,8 @@ class _StudentORState extends State<StudentOR> {
       ),
       child: TextField(
         controller: _searchController,
-        onChanged: (v) => setState(() => _searchQuery = v),
+        onChanged: (v) => setState(() => _searchQuery =
+            v), // Fires rebuild loop to re-filter row allocations dynamically
         decoration: InputDecoration(
           hintText: 'Search',
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
@@ -317,7 +324,8 @@ class _StudentORState extends State<StudentOR> {
           else
             ListView.separated(
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
+              physics:
+                  const NeverScrollableScrollPhysics(), // Blocks inner row list conflicts within master scrollers
               itemCount: subCodes.length,
               separatorBuilder: (_, __) => const Divider(
                 height: 1,
@@ -331,10 +339,11 @@ class _StudentORState extends State<StudentOR> {
                 final subject = subjectMap[subCode];
                 final offerings = offeringsBySubject[subCode] ?? [];
 
-                // Kira lecture sections sahaja untuk display
+                // Filter logic separating lecture data profiles exclusively for specific display mappings
                 final lectureSections =
                     offerings.where((o) => o.classType == 'Lecture').toList();
 
+                // Cross-references historical user collections to render a visible checkmark token dynamically
                 final isRegistered = ctrl.isSubjectRegistered(subCode);
 
                 return _SubjectTile(
@@ -444,6 +453,7 @@ class _SubjectTile extends StatelessWidget {
                     color: Colors.grey.shade500,
                   ),
                 ),
+                // Evaluates boolean status parameters to render confirmation pips
                 if (isRegistered)
                   const Text(
                     'Registered ✓',

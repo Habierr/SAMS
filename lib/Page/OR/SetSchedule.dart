@@ -11,6 +11,7 @@ class SetSchedule extends StatefulWidget {
 }
 
 class _SetScheduleState extends State<SetSchedule> {
+  // Nested map holding active form input state fields for each student cohort group
   final Map<String, Map<String, String>> _schedules = {
     'P1 & P2 students': {},
     'Year 4 students': {},
@@ -25,6 +26,7 @@ class _SetScheduleState extends State<SetSchedule> {
     'Year 2 students',
   ];
 
+  // Map serving as a dictionary translation key to link descriptive text strings with raw database field keys
   final Map<String, String> _yearGroupToStudentYear = {
     'P1 & P2 students': 'P1P2',
     'Year 4 students': 'Year 4',
@@ -38,6 +40,7 @@ class _SetScheduleState extends State<SetSchedule> {
     'Short semester',
   ];
 
+  // Tracking identifiers that control active section card expansions and hold temporary field parameters
   String? _expandedGroup;
   String? _tempStartDate;
   String? _tempEndDate;
@@ -49,14 +52,17 @@ class _SetScheduleState extends State<SetSchedule> {
   @override
   void initState() {
     super.initState();
+    // Post-frame callback schedules initial remote data cache loading tasks to run safely after layout sizing
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadExistingSessions();
     });
   }
 
+  // Iterates over cached remote provider objects on startup to reconstruct historical cohort profiles
   void _loadExistingSessions() {
     final ctrl = context.read<ORController>();
     for (final session in ctrl.orSessions) {
+      // Cross-references backend session keys with our UI label map to determine target mapping bounds
       final groupLabel = _yearGroupToStudentYear.entries
           .firstWhere(
             (e) => e.value == session.studentYear,
@@ -82,6 +88,7 @@ class _SetScheduleState extends State<SetSchedule> {
   String _formatDateForDisplay(DateTime dt) =>
       '${dt.day}-${dt.month}-${dt.year}';
 
+  // Converts a display text segment (DD-MM-YYYY) back into a fully queryable system DateTime object
   DateTime _parseDisplayDate(String date) {
     final parts = date.split('-');
     if (parts.length == 3) {
@@ -94,6 +101,7 @@ class _SetScheduleState extends State<SetSchedule> {
     return DateTime.now();
   }
 
+  // Evaluates scheduled ranges directly against system wall clocks to return the active badge status
   String _getStatus(String group) {
     final data = _schedules[group]!;
     if (!data.containsKey('startDate')) return 'Not set';
@@ -103,11 +111,14 @@ class _SetScheduleState extends State<SetSchedule> {
 
     String rawStatus;
     try {
+      // Approach A: Query status label parameters computed natively by the background provider loop
       final session = ctrl.orSessions.firstWhere(
         (s) => s.studentYear == studentYear,
       );
-      rawStatus = session.statusLabel; // 'Active', 'Upcoming', 'Ended'
+      rawStatus =
+          session.statusLabel; // Resolves to 'Active', 'Upcoming', or 'Ended'
     } catch (_) {
+      // Approach B: Dynamic parsing fallback evaluating time bounds manually if cache indices miss
       final startDate = _parseDisplayDate(data['startDate']!);
       final endDate = _parseDisplayDate(data['endDate']!);
       final startTimeParts = (data['startTime'] ?? '00:00').split(':');
@@ -138,9 +149,11 @@ class _SetScheduleState extends State<SetSchedule> {
       }
     }
 
+    // Explicit UX fallback: Hide expired or dead sessions back under the standard 'Not set' option layout
     return rawStatus == 'Ended' ? 'Not set' : rawStatus;
   }
 
+  // Triggers native datepicker component stylized with custom primary layout colors
   Future<String?> _pickDate(BuildContext context, {String? initial}) async {
     DateTime now = DateTime.now();
     DateTime? init;
@@ -174,6 +187,7 @@ class _SetScheduleState extends State<SetSchedule> {
     return '${picked.day}-${picked.month}-${picked.year}';
   }
 
+  // Triggers custom styled native material time picker component returning string formatted values
   Future<String?> _pickTime(BuildContext context, {String? initial}) async {
     TimeOfDay init = TimeOfDay.now();
     if (initial != null) {
@@ -202,6 +216,7 @@ class _SetScheduleState extends State<SetSchedule> {
     return '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
   }
 
+  // Synchronizes visual sub-form field arrays when a specific cohort card is expanded
   void _openForm(String group) {
     final existing = _schedules[group]!;
     final status = _getStatus(group);
@@ -223,6 +238,7 @@ class _SetScheduleState extends State<SetSchedule> {
     });
   }
 
+  // Bundles form state parameters into an ORSession blueprint object before deploying a save stream modification
   Future<void> _saveForm(String group) async {
     if (_tempStartDate == null || _tempEndDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -241,6 +257,7 @@ class _SetScheduleState extends State<SetSchedule> {
     final studentYear = _yearGroupToStudentYear[group] ?? group;
     final existing = _schedules[group]!;
 
+    // Resolves unique key constraints, creating a timestamped string hash for fresh schedule additions
     final sessionID = existing['sessionID'] ??
         'SES-$studentYear-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -257,6 +274,7 @@ class _SetScheduleState extends State<SetSchedule> {
     );
 
     try {
+      // Dispatches domain entity payload down to cloud storage layers via controller execution actions
       await ctrl.saveORSession(session);
 
       setState(() {
@@ -295,6 +313,7 @@ class _SetScheduleState extends State<SetSchedule> {
     }
   }
 
+  // Generates state tracking action pill indicators based on operational status calculation maps
   Widget _buildBadge(String group) {
     final status = _getStatus(group);
 
@@ -365,6 +384,7 @@ class _SetScheduleState extends State<SetSchedule> {
     );
   }
 
+  // Reusable custom field wrapper linking gesture triggers to dialog pickers uniformally
   Widget _buildTapField({
     required String label,
     required String? value,
@@ -413,7 +433,7 @@ class _SetScheduleState extends State<SetSchedule> {
       backgroundColor: const Color(0xFFEEF3F7),
       body: Column(
         children: [
-          // ── Header ──────────────────────────────────────────────────
+          // ── Gradient Header Layout ──
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -460,14 +480,14 @@ class _SetScheduleState extends State<SetSchedule> {
             ),
           ),
 
-          // ── Body ────────────────────────────────────────────────────
+          // ── Main operational canvas region ──
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Search bar
+                  // Filter text search layout component
                   Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -497,7 +517,7 @@ class _SetScheduleState extends State<SetSchedule> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ── Status legend ──────────────────────────────────
+                  // Status badge description chart card info container
                   Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 10),
@@ -518,7 +538,7 @@ class _SetScheduleState extends State<SetSchedule> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ── Priority access card ───────────────────────────
+                  // Priority access status grid roster card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -603,7 +623,7 @@ class _SetScheduleState extends State<SetSchedule> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ── OR Period form ─────────────────────────────────
+                  // Contextual dropdown sub-form rendering card block
                   if (_expandedGroup != null) ...[
                     Container(
                       width: double.infinity,
@@ -630,7 +650,6 @@ class _SetScheduleState extends State<SetSchedule> {
                               color: Color(0xFF1A5F7A),
                             ),
                           ),
-                          // ✅ Info — OR akan auto-active bila masa tiba
                           Padding(
                             padding: const EdgeInsets.only(top: 4, bottom: 16),
                             child: Text(
@@ -641,7 +660,6 @@ class _SetScheduleState extends State<SetSchedule> {
                               ),
                             ),
                           ),
-
                           const Text(
                             'Semester',
                             style: TextStyle(

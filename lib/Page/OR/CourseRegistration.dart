@@ -18,14 +18,17 @@ class CourseRegistration extends StatefulWidget {
 }
 
 class _CourseRegistrationState extends State<CourseRegistration> {
+  // Pointers to handle user section choice bindings dynamically
   OfferingRegistration? _selectedLecture;
   OfferingRegistration? _selectedSecondary; // Lab atau Tutorial
 
   bool _isRegistering = false;
 
+  // Filters incoming dataset down exclusively to master lecture options
   List<OfferingRegistration> get _lectureSections =>
       widget.offerings.where((o) => o.classType == 'Lecture').toList();
 
+  // Dynamic filter linking dependent lab/tutorial rows to the selected lecture prefix group number
   List<OfferingRegistration> get _secondarySections {
     if (_selectedLecture == null) return [];
     final lectSectNo = _selectedLecture!.sectNo;
@@ -38,6 +41,7 @@ class _CourseRegistrationState extends State<CourseRegistration> {
 
   bool get _hasSecondary => _secondarySections.isNotEmpty;
 
+  // Dynamically targets string label representations depending on component metadata type
   String get _secondaryLabel {
     if (_secondarySections.isEmpty) return '';
     return _secondarySections.first.classType == 'Lab'
@@ -49,12 +53,14 @@ class _CourseRegistrationState extends State<CourseRegistration> {
   void initState() {
     super.initState();
 
+    // Default configuration strategy: Auto-bind the first available non-full lecture option on initialization
     _selectedLecture = _lectureSections.where((o) => !o.isFull).firstOrNull ??
         (_lectureSections.isNotEmpty ? _lectureSections.first : null);
 
     _autoSelectSecondary();
   }
 
+  // Updates child selection tracking state automatically when the master lecture focus updates
   void _autoSelectSecondary() {
     if (_hasSecondary) {
       _selectedSecondary =
@@ -67,7 +73,9 @@ class _CourseRegistrationState extends State<CourseRegistration> {
 
   // ── registerSubject() ─────────────────────────────────────────────────────
 
+  // Primary operational pipeline handling synchronous database mutations for selected sessions
   Future<void> _onRegister() async {
+    // Input guardrails preventing invalid checkout pipeline fires
     if (_selectedLecture == null) {
       _showSnack('Please select a lecture section.', isError: true);
       return;
@@ -80,8 +88,10 @@ class _CourseRegistrationState extends State<CourseRegistration> {
     setState(() => _isRegistering = true);
     final ctrl = context.read<ORController>();
 
+    // Step 1: Execute transaction request for the primary lecture entry document
     String? error = await ctrl.registerSubject(offering: _selectedLecture!);
 
+    // Step 2: If primary request succeeds, execute secondary dependent enrollment write concurrently
     if (error == null && _hasSecondary && _selectedSecondary != null) {
       error = await ctrl.registerSubject(offering: _selectedSecondary!);
     }
@@ -89,6 +99,7 @@ class _CourseRegistrationState extends State<CourseRegistration> {
     setState(() => _isRegistering = false);
     if (!mounted) return;
 
+    // Handle results mapping by dispatching a modal confirmation banner or error trap response
     if (error != null) {
       _showSnack(error, isError: true);
     } else {
@@ -99,6 +110,7 @@ class _CourseRegistrationState extends State<CourseRegistration> {
 
   void _onCancel() => Navigator.pop(context);
 
+  // Centralized reusable custom banner layout widget helper
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -248,10 +260,11 @@ class _CourseRegistrationState extends State<CourseRegistration> {
                 isSelected: _selectedLecture?.sectID == o.sectID,
                 showLecturer: true,
                 onTap: o.isFull
-                    ? null
+                    ? null // Disables taps globally across components if capacity reaches maximum limit
                     : () => setState(() {
                           _selectedLecture = o;
 
+                          // Forces dynamic recalculation on dependent lists upon master context changes
                           _autoSelectSecondary();
                         }),
               ),
@@ -515,7 +528,7 @@ class _OfferingTile extends StatelessWidget {
                 ],
               ),
             ),
-            // Radio button
+            // Dynamic radio button state styling evaluating interaction boundaries
             Radio<bool>(
               value: true,
               groupValue: isSelected ? true : null,

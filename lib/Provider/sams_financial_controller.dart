@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// ignore: unused_import
 import '../domain/sams_financial_model.dart';
 
 class SAMSFinancialController extends ChangeNotifier {

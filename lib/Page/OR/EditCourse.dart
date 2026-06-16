@@ -22,13 +22,16 @@ class EditCourse extends StatefulWidget {
 }
 
 class _EditCourseState extends State<EditCourse> {
+  // Temporary state trackers holding the newly selected row sections during editing
   OfferingRegistration? _selectedLecture;
   OfferingRegistration? _selectedSecondary;
   bool _isSaving = false;
 
+  // Filters global listings to extract core Lecture rows
   List<OfferingRegistration> get _lectureSections =>
       widget.offerings.where((o) => o.classType == 'Lecture').toList();
 
+  // Filters dependent sections matching the parent prefix of the active lecture choice
   List<OfferingRegistration> get _secondarySections {
     if (_selectedLecture == null) return [];
     final lectSectNo = _selectedLecture!.sectNo;
@@ -41,6 +44,7 @@ class _EditCourseState extends State<EditCourse> {
 
   bool get _hasSecondary => _secondarySections.isNotEmpty;
 
+  // Dynamically switches string header titles depending on component type metadata
   String get _secondaryLabel {
     if (_secondarySections.isEmpty) return '';
     return _secondarySections.first.classType == 'Lab'
@@ -51,6 +55,7 @@ class _EditCourseState extends State<EditCourse> {
   @override
   void initState() {
     super.initState();
+    // Default setup: Lock focus onto the student's active live database lecture allocation record
     _selectedLecture = _lectureSections.firstWhere(
       (o) => o.sectID == widget.currentLectSectID,
       orElse: () => _lectureSections.first,
@@ -59,12 +64,14 @@ class _EditCourseState extends State<EditCourse> {
     _autoSelectSecondary(preferCurrent: true);
   }
 
+  // State coordination helper that maps secondary labs/tutorials when the lecture option shifts
   void _autoSelectSecondary({bool preferCurrent = false}) {
     if (!_hasSecondary) {
       _selectedSecondary = null;
       return;
     }
 
+    // Retain old tracking index pointers if the structural parent prefix hasn't altered
     if (preferCurrent && widget.currentSecSectID.isNotEmpty) {
       final match = _secondarySections
           .where((o) => o.sectID == widget.currentSecSectID)
@@ -75,11 +82,13 @@ class _EditCourseState extends State<EditCourse> {
       }
     }
 
+    // Fallback: Bind first available non-full subsection if the context splits
     _selectedSecondary =
         _secondarySections.where((o) => !o.isFull).firstOrNull ??
             _secondarySections.first;
   }
 
+  // Evaluation logic checking if current active screen selections differ from historical DB parameters
   bool get _hasChanges {
     final lectChanged = _selectedLecture?.sectID != widget.currentLectSectID;
     final secChanged =
@@ -87,7 +96,9 @@ class _EditCourseState extends State<EditCourse> {
     return lectChanged || secChanged;
   }
 
+  // Update transactional execution loop coordinating atomic double-write registration updates
   Future<void> _onSave() async {
+    // Intercept event processing if data configurations match historical entries exactly
     if (!_hasChanges) {
       _showSnack('No changes made.', isError: false);
       return;
@@ -105,6 +116,7 @@ class _EditCourseState extends State<EditCourse> {
     final ctrl = context.read<ORController>();
     String? error;
 
+    // Transaction Part A: Process core lecture modification tasks if mutations exist
     if (_selectedLecture!.sectID != widget.currentLectSectID) {
       error = await ctrl.editRegistration(
         subCode: widget.subject.subCode,
@@ -113,6 +125,7 @@ class _EditCourseState extends State<EditCourse> {
       );
     }
 
+    // Transaction Part B: Process dependent lab/tutorial documents sequentially if Part A completes cleanly
     if (error == null &&
         _hasSecondary &&
         _selectedSecondary != null &&
@@ -127,16 +140,19 @@ class _EditCourseState extends State<EditCourse> {
     setState(() => _isSaving = false);
     if (!mounted) return;
 
+    // Evaluate pipeline outcomes to trigger system banners or clear context view hierarchies
     if (error != null) {
       _showSnack(error, isError: true);
     } else {
       _showSnack('Changes saved for ${widget.subject.subName}!');
-      Navigator.pop(context, true);
+      Navigator.pop(context,
+          true); // Returns confirmation flag to refresh state on preceding list page
     }
   }
 
   void _onCancel() => Navigator.pop(context, false);
 
+  // Centralized floating status banner constructor configuration wrapper
   void _showSnack(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -152,6 +168,7 @@ class _EditCourseState extends State<EditCourse> {
 
   @override
   Widget build(BuildContext context) {
+    // Dynamically query semester label parameters straight out of active state controllers
     final semLabel = context.read<ORController>().activeSession?.semester ??
         'Sem 2 2025/2026';
 
@@ -167,8 +184,7 @@ class _EditCourseState extends State<EditCourse> {
                 _buildSubjectInfoCard(),
                 const SizedBox(height: 16),
                 _buildLectureSectionCard(),
-                // ✅ Lab/Tutorial card sentiasa selepas lecture, auto-refresh
-                // ikut lecture yang dipilih
+                // Dependent list updates automatically based on parent selection changes
                 if (_hasSecondary) ...[
                   const SizedBox(height: 16),
                   _buildSecondarySectionCard(),
@@ -183,6 +199,8 @@ class _EditCourseState extends State<EditCourse> {
       ),
     );
   }
+
+  // ── Header UI Component ──
 
   Widget _buildHeader(String semLabel) {
     return Container(
@@ -252,6 +270,8 @@ class _EditCourseState extends State<EditCourse> {
     );
   }
 
+  // ── Metadata Display Info Component ──
+
   Widget _buildSubjectInfoCard() {
     return _SectionCard(
       title: 'Subject Info',
@@ -269,6 +289,8 @@ class _EditCourseState extends State<EditCourse> {
       ),
     );
   }
+
+  // ── Lecture Card Listing Generator ──
 
   Widget _buildLectureSectionCard() {
     return _SectionCard(
@@ -292,6 +314,7 @@ class _EditCourseState extends State<EditCourse> {
                     : () => setState(() {
                           _selectedLecture = o;
 
+                          // Re-evaluate dependent listings, clearing past selections if group bounds shift
                           _autoSelectSecondary(preferCurrent: false);
                         }),
               ),
@@ -304,6 +327,8 @@ class _EditCourseState extends State<EditCourse> {
       ),
     );
   }
+
+  // ── Secondary Components Card Listing Generator ──
 
   Widget _buildSecondarySectionCard() {
     return _SectionCard(
@@ -337,6 +362,8 @@ class _EditCourseState extends State<EditCourse> {
       ),
     );
   }
+
+  // ── Processing Trigger Button Elements ──
 
   Widget _buildActionButtons() {
     return Column(
@@ -388,6 +415,7 @@ class _EditCourseState extends State<EditCourse> {
   }
 }
 
+// Custom internal container standardizing layout framing look across data categories
 class _SectionCard extends StatelessWidget {
   final String title;
   final Widget child;
@@ -430,6 +458,7 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+// Flat table row mapper handling row items
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
@@ -468,10 +497,12 @@ class _RowDivider extends StatelessWidget {
       );
 }
 
+// Interactive choice row mapping detailed metadata variables per item section
 class _OfferingTile extends StatelessWidget {
   final OfferingRegistration offering;
   final bool isSelected;
-  final bool isCurrent;
+  final bool
+      isCurrent; // Flags if row matches the student's historical allocation assignment
   final bool showLecturer;
   final VoidCallback? onTap;
 
@@ -485,6 +516,7 @@ class _OfferingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Row is disabled only if full AND not currently held by the student (they can always re-select their own slot)
     final disabled = offering.isFull && !isCurrent;
     final textColor = disabled ? Colors.grey.shade400 : const Color(0xFF1A1A2E);
     final subColor = disabled ? Colors.grey.shade300 : Colors.grey.shade600;
@@ -507,6 +539,7 @@ class _OfferingTile extends StatelessWidget {
                 ),
               ),
             ),
+            // Floating green label card identifying historical ownership
             if (isCurrent) ...[
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -571,6 +604,7 @@ class _OfferingTile extends StatelessWidget {
                 ],
               ),
             ),
+            // Material radio selector reflecting systemic interaction states
             Radio<bool>(
               value: true,
               groupValue: isSelected ? true : null,

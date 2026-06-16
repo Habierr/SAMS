@@ -3,8 +3,10 @@ import '../Domain/ORModel.dart';
 import '../Services/FirebaseService.dart';
 
 class ORController extends ChangeNotifier {
+  // Data persistence layer encapsulation dependency
   final FirebaseService _firebaseService = FirebaseService();
 
+  // Selected structural references for active entity manipulation sessions
   String _regisID = '';
   String _studentID = '';
   String _sectID = '';
@@ -17,11 +19,13 @@ class ORController extends ChangeNotifier {
   String get sessionID => _sessionID;
   String get regID => _regID;
 
+  // Global system cache arrays initialized to optimize internal memory operations
   List<OfferingRegistration> _offerings = [];
   List<String> _offeringsDocIds = [];
   List<Subject> _subjects = [];
   List<ORSession> _orSessions = [];
 
+  // Active student state data structures and related tracking document identities
   List<CourseRegistrationRecord> _studentRegistrations = [];
   List<String> _studentRegDocIds = [];
 
@@ -37,6 +41,7 @@ class ORController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  // Real-time calculated property using dynamic date/time tracking comparison logic
   ORSession? get activeSession {
     try {
       return _orSessions.firstWhere((s) => s.isActive);
@@ -45,12 +50,14 @@ class ORController extends ChangeNotifier {
     }
   }
 
+  // Dynamic filter array targeting current systemic semester allocations
   List<OfferingRegistration> get activeOfferings {
     final session = activeSession;
     if (session == null) return [];
     return _offerings.where((o) => o.semester == session.semester).toList();
   }
 
+  // Dynamic deduplication map compilation matrix preventing duplicate layout cards
   List<Subject> get activeSubjects {
     final Map<String, Subject> seen = {};
     for (final o in activeOfferings) {
@@ -78,6 +85,7 @@ class ORController extends ChangeNotifier {
     return seen.values.toList();
   }
 
+  // Structural mapping algorithm linking subject code descriptors to individual sections
   Map<String, List<OfferingRegistration>> get offeringsBySubject {
     final Map<String, List<OfferingRegistration>> map = {};
     for (final o in activeOfferings) {
@@ -126,6 +134,7 @@ class ORController extends ChangeNotifier {
     if (regisID != null) _regisID = regisID;
   }
 
+  // Multi-stream operational task scheduler initializing standard database objects simultaneously
   Future<void> loadData() async {
     _isLoading = true;
     _errorMessage = null;
@@ -152,6 +161,7 @@ class ORController extends ChangeNotifier {
     }
   }
 
+  // Continuous listener subscription piping global course offerings from cloud state maps
   void _listenToOfferings() {
     _firebaseService.getOfferingsWithIds().listen(
       (offeringsWithIds) {
@@ -172,6 +182,7 @@ class ORController extends ChangeNotifier {
     );
   }
 
+  // Reactive transaction stream syncing custom selection modifications instantly per matric session
   void _listenToStudentRegistrations() {
     _firebaseService.getStudentRegistrations(_studentID).listen(
       (regsWithIds) {
@@ -229,6 +240,7 @@ class ORController extends ChangeNotifier {
     await loadData();
   }
 
+  // Verification processing loop evaluating business constraints prior to structural document storage mutations
   Future<String?> registerSubject({
     required OfferingRegistration offering,
   }) async {
@@ -289,6 +301,7 @@ class ORController extends ChangeNotifier {
         semester: offering.semester,
       );
 
+      // Concurrent atomic pipeline requests mutating enrollment counts safely
       await _firebaseService.addStudentRegistration(record);
 
       await _firebaseService.incrementEnrolled(offering.sectID);
@@ -304,6 +317,7 @@ class ORController extends ChangeNotifier {
     }
   }
 
+  // Deletion logic matrix processing removals across interrelated dynamic list bounds sequentially
   Future<String?> dropSubject(String subCode) async {
     try {
       final toRemove = <int>[];
@@ -327,6 +341,7 @@ class ORController extends ChangeNotifier {
     }
   }
 
+  // Transaction swap script resetting indices dynamically during live subject updates
   Future<String?> editRegistration({
     required String subCode,
     required String classType,

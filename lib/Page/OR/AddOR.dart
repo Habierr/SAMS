@@ -18,8 +18,10 @@ class AddOR extends StatefulWidget {
 }
 
 class _AddORState extends State<AddOR> {
+  // Key utama untuk validate semua input Form sebelum submit ke database
   final _formKey = GlobalKey<FormState>();
 
+  // State hold values untuk form fields
   String _classType = 'Lecture';
   final _sectNoController = TextEditingController(text: '');
   final _quotaController = TextEditingController(text: '');
@@ -30,23 +32,29 @@ class _AddORState extends State<AddOR> {
   List<String> _selectedDays = [];
   bool _isSaving = false;
 
+  // Pre-defined static data untuk dropdown & wrapping selection
   final List<String> _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
   final List<String> _classTypes = ['Lecture', 'Tutorial', 'Lab'];
 
+  // Fungsi custom untuk generate Section ID (SECxxx) secara auto-increment
   String _generateSectID(List<String> existingDocIds) {
     int max = 0;
     for (final id in existingDocIds) {
+      // Guna Regex untuk cari pattern 'SEC' diikuti oleh nombor digital
       final match = RegExp(r'^SEC(\d+)$').firstMatch(id);
       if (match != null) {
+        // Ambil string nombor, parse jadi int untuk cari value paling tinggi
         final num = int.tryParse(match.group(1)!) ?? 0;
         if (num > max) max = num;
       }
     }
+    // Tambah 1 dari value max tadi dan padLeft supaya maintain format 3 digit (eg: SEC004)
     return 'SEC${(max + 1).toString().padLeft(3, '0')}';
   }
 
   @override
   void dispose() {
+    // Alihkan controller dari memory bila page ditutup untuk elak memory leak
     _sectNoController.dispose();
     _quotaController.dispose();
     _lectNameController.dispose();
@@ -56,6 +64,7 @@ class _AddORState extends State<AddOR> {
     super.dispose();
   }
 
+  // Fungsi pop-up time picker dialog untuk mudahkan user set jam/minit
   Future<void> _pickTime(TextEditingController controller) async {
     final parts = controller.text.split(':');
     final initial = TimeOfDay(
@@ -79,13 +88,16 @@ class _AddORState extends State<AddOR> {
     );
     if (picked != null) {
       setState(() {
+        // Format semula hasil pick jadi string HH:MM untuk disimpan ke text field
         controller.text =
             '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
       });
     }
   }
 
+  // Operation master pipeline untuk bungkus data form dan hantar ke controller
   Future<void> _saveOffering() async {
+    // Check validation rules dulu. Kalau ada textfield kosong, program cut off kat sini
     if (!_formKey.currentState!.validate()) return;
     if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -96,10 +108,13 @@ class _AddORState extends State<AddOR> {
 
     setState(() => _isSaving = true);
 
+    // Tarik ORController state block tanpa pasang continuous stream listener
     final controller = Provider.of<ORController>(context, listen: false);
 
+    // Minta generate primary key baru base on metadata array list sedia ada
     final sectID = _generateSectID(controller.offeringsDocIds);
 
+    // Map semua fields masuk ke dalam format constructor blueprint OfferingRegistration
     final offering = OfferingRegistration(
       sectID: sectID,
       subCode: widget.subject.subCode,
@@ -110,7 +125,8 @@ class _AddORState extends State<AddOR> {
       enrolled: 0,
       lectName:
           _lectNameController.text.isEmpty ? 'TBA' : _lectNameController.text,
-      days: _selectedDays.join(','),
+      days: _selectedDays.join(
+          ','), // Gabung elemen array jadi single string string separated by comma
       startTime: _startTimeController.text,
       endTime: _endTimeController.text,
       venue: _venueController.text.isEmpty ? 'TBA' : _venueController.text,
@@ -118,11 +134,13 @@ class _AddORState extends State<AddOR> {
       session: '',
     );
 
+    // Hantar data core model ke Firebase API service
     await controller.addOffering(offering);
     await controller.loadData();
 
     setState(() => _isSaving = false);
 
+    // Tutup dialog screen dan pulangkan status true untuk trigger refresh pada parent page
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('OR Section added successfully!')),
@@ -131,6 +149,7 @@ class _AddORState extends State<AddOR> {
     }
   }
 
+  // Fungsi template layout re-useable untuk standardise reka bentuk border/color TextField
   InputDecoration _fieldDecoration(String label) {
     return InputDecoration(
       labelText: label,
@@ -164,6 +183,7 @@ class _AddORState extends State<AddOR> {
     );
   }
 
+  // Custom UI block wrapper bertindak sebagai Card container untuk kemaskan susunan input field
   Widget _buildSectionCard({required String title, required Widget child}) {
     return Container(
       width: double.infinity,
@@ -252,7 +272,7 @@ class _AddORState extends State<AddOR> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ✅ Tunjuk semester yang akan digunakan
+              // Banner info ringkas untuk maklumkan target semester subjek yang sedang di-set up
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(bottom: 14),
@@ -281,7 +301,7 @@ class _AddORState extends State<AddOR> {
                 ),
               ),
 
-              // Class Card
+              // Dropdown widget selector untuk memilih kategori komponen kelas (eg: Lab, Lecture)
               _buildSectionCard(
                 title: 'Class',
                 child: DropdownButtonFormField<String>(
@@ -318,7 +338,7 @@ class _AddORState extends State<AddOR> {
                 ),
               ),
 
-              // Section Details Card
+              // Section input core details
               _buildSectionCard(
                 title: 'Section details',
                 child: Column(
@@ -353,7 +373,7 @@ class _AddORState extends State<AddOR> {
                 ),
               ),
 
-              // Class Schedule Card
+              // UI Selector days wrapper, time inputs, dan data input lokasi kuliah
               _buildSectionCard(
                 title: 'Class schedule',
                 child: Column(
@@ -478,7 +498,7 @@ class _AddORState extends State<AddOR> {
 
               const SizedBox(height: 4),
 
-              // Save Button
+              // Master action button coordinating transaction validation steps
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(

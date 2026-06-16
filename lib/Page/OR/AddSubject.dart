@@ -11,17 +11,21 @@ class AddSubject extends StatefulWidget {
 }
 
 class _AddSubjectState extends State<AddSubject> {
+  // GlobalKey untuk handle form validation status sebelum subjek baru disimpan
   final _formKey = GlobalKey<FormState>();
 
+  // Text controller untuk menangkap input data dari textfield
   final _subCodeCtrl = TextEditingController();
   final _subNameCtrl = TextEditingController();
   final _creditHourCtrl = TextEditingController();
   final _facultyCtrl = TextEditingController();
 
+  // State flag untuk control loading spinner dekat butang Save
   bool _isSaving = false;
 
   @override
   void dispose() {
+    // Dipose semua controller bila widget mati untuk jimat memori / elak leak
     _subCodeCtrl.dispose();
     _subNameCtrl.dispose();
     _creditHourCtrl.dispose();
@@ -29,23 +33,29 @@ class _AddSubjectState extends State<AddSubject> {
     super.dispose();
   }
 
+  // Fungsi hantar data subjek baru ke state controller (ORController)
   Future<void> _saveSubject() async {
+    // Trigger validation semua field. Kalau ada error, fungsi stop kat sini
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
 
+    // Ambil input, trim whitespace, dan paksa subCode jadi uppercase automatik
     final newSubject = Subject(
       subCode: _subCodeCtrl.text.trim().toUpperCase(),
       subName: _subNameCtrl.text.trim(),
-      creditHour: int.tryParse(_creditHourCtrl.text.trim()) ?? 3,
+      creditHour: int.tryParse(_creditHourCtrl.text.trim()) ??
+          3, // Fallback ke 3 jam kredit kalau parse fail
       faculty: _facultyCtrl.text.trim(),
     );
 
     try {
+      // Panggil function addSubject dari Provider tanpa re-trigger build context
       final controller = Provider.of<ORController>(context, listen: false);
       await controller.addSubject(newSubject);
 
       if (mounted) {
+        // Papar status kejayaan guna snackbar melayang (floating)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${newSubject.subCode} added successfully!'),
@@ -53,6 +63,7 @@ class _AddSubjectState extends State<AddSubject> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+        // Tutup page dan hantar feedback 'true' ke parent widget untuk senarai di-refresh
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -70,6 +81,7 @@ class _AddSubjectState extends State<AddSubject> {
     }
   }
 
+  // Helper widget builder untuk elakkan duplicate kod UI custom TextFormField
   Widget _buildField({
     required TextEditingController controller,
     required String label,
@@ -220,7 +232,7 @@ class _AddSubjectState extends State<AddSubject> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Subject Code
+                          // Input untuk Kod Subjek
                           _buildField(
                             controller: _subCodeCtrl,
                             label: 'Subject Code',
@@ -236,7 +248,7 @@ class _AddSubjectState extends State<AddSubject> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Subject Name
+                          // Input untuk Nama Subjek
                           _buildField(
                             controller: _subNameCtrl,
                             label: 'Subject Name',
@@ -247,7 +259,7 @@ class _AddSubjectState extends State<AddSubject> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Credit Hour + Faculty in a row
+                          // Susunan horizontal untuk jam kredit dan fakulti
                           Row(
                             children: [
                               Expanded(
@@ -262,7 +274,7 @@ class _AddSubjectState extends State<AddSubject> {
                                     }
                                     final n = int.tryParse(v);
                                     if (n == null || n < 1 || n > 6) {
-                                      return '1 – 6';
+                                      return '1 – 6'; // Validasi had minimum dan maksimum jam kredit
                                     }
                                     return null;
                                   },
