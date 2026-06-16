@@ -4,6 +4,7 @@ import 'package:sams/Page/Attendance/attendanceCheckIn.dart';
 import 'package:sams/Page/student/student_dashboard.dart';
 
 class FillAttendance extends StatelessWidget {
+  // Student and selected subject information
   final String studentName;
   final String studentId;
   final String subCode;
@@ -21,6 +22,8 @@ class FillAttendance extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+
+      // Student navigation drawer
       drawer: Drawer(
         child: Column(
           children: [
@@ -106,6 +109,8 @@ class FillAttendance extends StatelessWidget {
           ],
         ),
       ),
+
+      // SAMS application header
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
@@ -154,6 +159,8 @@ class FillAttendance extends StatelessWidget {
           ),
         ),
       ),
+
+      // Display student's attendance records
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 35, 20, 20),
@@ -195,6 +202,8 @@ class FillAttendance extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 25),
+
+            // Load attendance records from Firestore in real time
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
@@ -267,6 +276,8 @@ class FillAttendance extends StatelessWidget {
                                 ],
                               ),
                             ),
+
+                            // Attendance status badge
                             Container(
                               width: 85,
                               height: 28,
@@ -299,6 +310,7 @@ class FillAttendance extends StatelessWidget {
     );
   }
 
+  // Reusable text display for attendance details
   Widget _infoText(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 3),

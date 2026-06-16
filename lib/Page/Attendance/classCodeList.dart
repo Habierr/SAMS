@@ -5,6 +5,7 @@ import 'package:sams/Page/Attendance/lecturer_dashboard.dart';
 import 'package:sams/Page/Attendance/attendanceReport.dart';
 
 class ClassCodeList extends StatelessWidget {
+  // Lecturer and class information
   final String lecturerName;
   final String lecturerId;
   final String regID;
@@ -32,6 +33,7 @@ class ClassCodeList extends StatelessWidget {
     required this.semester,
   });
 
+  // Copy class code to clipboard
   void copyClassCode(BuildContext context, String code) {
     if (code.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,6 +49,7 @@ class ClassCodeList extends StatelessWidget {
     );
   }
 
+  // Open attendance report page
   void openReport(BuildContext context, Map<String, dynamic> data) {
     Navigator.push(
       context,
@@ -69,6 +72,8 @@ class ClassCodeList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+
+      // Lecturer navigation drawer
       drawer: Drawer(
         child: Column(
           children: [
@@ -137,6 +142,8 @@ class ClassCodeList extends StatelessWidget {
           ],
         ),
       ),
+
+      // SAMS application header
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
@@ -185,6 +192,8 @@ class ClassCodeList extends StatelessWidget {
           ),
         ),
       ),
+
+      // Display class information and class code list
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(20, 30, 20, 20),
@@ -242,6 +251,8 @@ class ClassCodeList extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
+
+            // Load class codes from Firestore in real time
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
@@ -299,6 +310,8 @@ class ClassCodeList extends StatelessWidget {
                             ),
                             _infoText('Class Code', classCode),
                             const SizedBox(height: 14),
+
+                            // Copy generated class code
                             SizedBox(
                               width: double.infinity,
                               height: 40,
@@ -323,6 +336,8 @@ class ClassCodeList extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
+
+                            // View attendance report for selected class code
                             SizedBox(
                               width: double.infinity,
                               height: 42,
@@ -355,6 +370,8 @@ class ClassCodeList extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 8),
+
+                            // Update and delete class code actions
                             Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
@@ -394,6 +411,7 @@ class ClassCodeList extends StatelessWidget {
     );
   }
 
+  // Reusable text display for class code details
   Widget _infoText(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
@@ -418,6 +436,7 @@ class ClassCodeList extends StatelessWidget {
     );
   }
 
+  // Show confirmation dialog before deleting class code
   void _showDeleteDialog(BuildContext context, String docId) {
     showDialog(
       context: context,
@@ -494,6 +513,7 @@ class ClassCodeList extends StatelessWidget {
     );
   }
 
+  // Show dialog to update class code date
   void _showUpdateDialog(
     BuildContext context,
     String docId,
@@ -680,6 +700,8 @@ class ClassCodeList extends StatelessWidget {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
+
+                          // Save updated class code information
                           onPressed: () async {
                             if (displayDate.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -729,6 +751,7 @@ class ClassCodeList extends StatelessWidget {
     );
   }
 
+  // Reusable popup box for update dialog fields
   Widget _popupBox(String text, {IconData? icon}) {
     return Container(
       height: 36,
@@ -759,6 +782,7 @@ class ClassCodeList extends StatelessWidget {
     );
   }
 
+  // Show success message after update
   void _showSuccessDialog(BuildContext context) {
     showDialog(
       context: context,

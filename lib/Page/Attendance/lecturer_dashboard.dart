@@ -10,7 +10,8 @@ class LecturerDashboard extends StatelessWidget {
     required this.lecturerName,
     required this.lecturerId,
   });
-
+  
+// Lecturer dashboard interface
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,6 +161,7 @@ class LecturerDashboard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
+            // Load lecturer course registrations from Firestore
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance

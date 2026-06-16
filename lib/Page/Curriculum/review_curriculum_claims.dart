@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'pending_claims_list.dart';
 
+// Main page to review curriculum claim summary
 class ReviewCurriculumClaims extends StatelessWidget {
   const ReviewCurriculumClaims({super.key});
 
@@ -23,14 +24,18 @@ class ReviewCurriculumClaims extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
           child: StreamBuilder<QuerySnapshot>(
+            // Retrieve all curriculum claim records from Firestore
             stream: FirebaseFirestore.instance
                 .collection('curriculum_claims')
                 .snapshots(),
+
             builder: (context, snapshot) {
+              // Initialize claim status counters
               int pending = 0;
               int approved = 0;
               int rejected = 0;
 
+              // Count total claims based on their status
               if (snapshot.hasData) {
                 for (var doc in snapshot.data!.docs) {
                   final data = doc.data() as Map<String, dynamic>;
@@ -46,54 +51,67 @@ class ReviewCurriculumClaims extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Section title
                   const Text(
                     'Approval details',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
+
                   const SizedBox(height: 25),
+
+                  // Card showing total pending claims
                   StatusCard(
                     number: pending.toString(),
                     label: 'PENDING',
                     color: const Color(0xFFFFFF66),
                     icon: Icons.hourglass_empty,
                     onTap: () {
+                      // Navigate to list of pending claims
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                          const ClaimListByStatusPage(status: 'PENDING'),
+                              const ClaimListByStatusPage(status: 'PENDING'),
                         ),
                       );
                     },
                   ),
+
                   const SizedBox(height: 20),
+
+                  // Card showing total approved claims
                   StatusCard(
                     number: approved.toString(),
                     label: 'APPROVED',
                     color: const Color(0xFF6DDB66),
                     icon: Icons.check_circle_outline,
                     onTap: () {
+                      // Navigate to list of approved claims
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                          const ClaimListByStatusPage(status: 'APPROVED'),
+                              const ClaimListByStatusPage(status: 'APPROVED'),
                         ),
                       );
                     },
                   ),
+
                   const SizedBox(height: 20),
+
+                  // Card showing total rejected claims
                   StatusCard(
                     number: rejected.toString(),
                     label: 'REJECTED',
                     color: const Color(0xFFFF4E55),
                     icon: Icons.cancel_outlined,
                     onTap: () {
+                      // Navigate to list of rejected claims
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                          const ClaimListByStatusPage(status: 'REJECTED'),
+                              const ClaimListByStatusPage(status: 'REJECTED'),
                         ),
                       );
                     },
@@ -107,6 +125,7 @@ class ReviewCurriculumClaims extends StatelessWidget {
     );
   }
 
+  // Reusable app bar for review curriculum claims page
   PreferredSize _buildAppBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(130),
@@ -114,10 +133,14 @@ class ReviewCurriculumClaims extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
+
+        // Menu button to return to previous page
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white, size: 28),
           onPressed: () => Navigator.pop(context),
         ),
+
+        // App bar title
         title: const Padding(
           padding: EdgeInsets.only(top: 10),
           child: Text(
@@ -131,7 +154,10 @@ class ReviewCurriculumClaims extends StatelessWidget {
             ),
           ),
         ),
+
         centerTitle: true,
+
+        // UMPSA logo
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -143,6 +169,8 @@ class ReviewCurriculumClaims extends StatelessWidget {
             ),
           ),
         ],
+
+        // Blue gradient background
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -161,6 +189,7 @@ class ReviewCurriculumClaims extends StatelessWidget {
   }
 }
 
+// Reusable card widget to display claim status summary
 class StatusCard extends StatelessWidget {
   final String number;
   final String label;
@@ -180,6 +209,7 @@ class StatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      // Open claim list when card is tapped
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
@@ -190,6 +220,7 @@ class StatusCard extends StatelessWidget {
           color: color,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
+            // Add shadow effect to make the card stand out
             BoxShadow(
               color: Colors.black.withOpacity(0.15),
               blurRadius: 12,
@@ -199,6 +230,7 @@ class StatusCard extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // Display total number and status label
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -212,7 +244,9 @@ class StatusCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 5),
+
                   Text(
                     label,
                     style: const TextStyle(
@@ -225,6 +259,8 @@ class StatusCard extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Display status icon
             Container(
               width: 78,
               height: 78,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sams/Page/Attendance/lecturer_dashboard.dart';
 
 class AttendanceManagement extends StatelessWidget {
+   // Lecturer and class information
   final String lecturerName;
   final String lecturerId;
   final String regID;

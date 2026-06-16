@@ -3,21 +3,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'activity_claim_form_view.dart';
 import 'claim_details_view.dart';
 
+// Page to display all activity claims submitted by student
 class MyActivityClaimsView extends StatelessWidget {
   const MyActivityClaimsView({super.key});
 
+  // Return main color based on claim status
   Color getStatusColor(String status) {
     if (status == 'APPROVED') return const Color(0xFF5FCB6A);
     if (status == 'REJECTED') return const Color(0xFFFF4B4B);
     return const Color(0xFFFFEB63);
   }
 
+  // Return icon based on claim status
   IconData getStatusIcon(String status) {
     if (status == 'APPROVED') return Icons.check_circle_outline;
     if (status == 'REJECTED') return Icons.cancel_outlined;
     return Icons.hourglass_empty;
   }
 
+  // Return soft background color based on claim status
   Color getStatusSoftColor(String status) {
     if (status == 'APPROVED') return const Color(0xFFE8FBEA);
     if (status == 'REJECTED') return const Color(0xFFFFE8E8);
@@ -29,6 +33,8 @@ class MyActivityClaimsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: _buildAppBar(),
+
+      // Main body container
       body: Container(
         width: double.infinity,
         decoration: const BoxDecoration(
@@ -38,10 +44,12 @@ class MyActivityClaimsView extends StatelessWidget {
             topRight: Radius.circular(28),
           ),
         ),
+
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
           child: Column(
             children: [
+              // Button to submit a new activity claim
               Align(
                 alignment: Alignment.centerRight,
                 child: Container(
@@ -71,12 +79,14 @@ class MyActivityClaimsView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
+
+                    // Navigate to new activity claim form
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                          const ActivityClaimFormView(),
+                              const ActivityClaimFormView(),
                         ),
                       );
                     },
@@ -92,18 +102,24 @@ class MyActivityClaimsView extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(height: 22),
+
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
+                  // Retrieve activity claims from Firestore, newest first
                   stream: FirebaseFirestore.instance
                       .collection('curriculum_claims')
                       .orderBy('submitted_at', descending: true)
                       .snapshots(),
+
                   builder: (context, snapshot) {
+                    // Display loading indicator while waiting for data
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
+                    // Display message if there is no claim record
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                       return const Center(
                         child: Text(
@@ -115,6 +131,7 @@ class MyActivityClaimsView extends StatelessWidget {
 
                     final claims = snapshot.data!.docs;
 
+                    // Display claim records in list view
                     return ListView.builder(
                       padding: const EdgeInsets.only(bottom: 20),
                       itemCount: claims.length,
@@ -122,6 +139,7 @@ class MyActivityClaimsView extends StatelessWidget {
                         final doc = claims[index];
                         final data = doc.data() as Map<String, dynamic>;
 
+                        // Extract claim data from Firestore document
                         final studentId = data['student_id'] ?? '';
                         final activityName = data['activity_name'] ?? '';
                         final activityDate = data['activity_date'] ?? '-';
@@ -155,6 +173,7 @@ class MyActivityClaimsView extends StatelessWidget {
     );
   }
 
+  // Reusable app bar for my activity claims page
   PreferredSize _buildAppBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(145),
@@ -162,6 +181,8 @@ class MyActivityClaimsView extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
+
+        // Menu button to return to previous page
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
@@ -170,6 +191,8 @@ class MyActivityClaimsView extends StatelessWidget {
             },
           ),
         ),
+
+        // App bar title
         title: const Text(
           'MY ACTIVITY\nCLAIMS',
           textAlign: TextAlign.center,
@@ -181,7 +204,10 @@ class MyActivityClaimsView extends StatelessWidget {
             letterSpacing: 0.5,
           ),
         ),
+
         centerTitle: true,
+
+        // UMPSA logo
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -191,6 +217,8 @@ class MyActivityClaimsView extends StatelessWidget {
             ),
           ),
         ],
+
+        // Green gradient background
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -208,6 +236,7 @@ class MyActivityClaimsView extends StatelessWidget {
     );
   }
 
+  // Reusable card widget to display one activity claim record
   Widget _buildClaimCard({
     required BuildContext context,
     required String docId,
@@ -228,6 +257,7 @@ class MyActivityClaimsView extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
+          // Add shadow effect to make the card stand out
           BoxShadow(
             color: Colors.black.withOpacity(0.07),
             blurRadius: 14,
@@ -235,8 +265,10 @@ class MyActivityClaimsView extends StatelessWidget {
           ),
         ],
       ),
+
       child: Row(
         children: [
+          // Status icon circle
           Container(
             width: 66,
             height: 66,
@@ -249,18 +281,20 @@ class MyActivityClaimsView extends StatelessWidget {
               color: status == 'PENDING'
                   ? Colors.orange
                   : status == 'APPROVED'
-                  ? Colors.green
-                  : Colors.red,
+                      ? Colors.green
+                      : Colors.red,
               size: 34,
             ),
           ),
 
           const SizedBox(width: 14),
 
+          // Claim basic information
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Student ID
                 Text(
                   code,
                   style: const TextStyle(
@@ -269,7 +303,10 @@ class MyActivityClaimsView extends StatelessWidget {
                     color: Color(0xFF1F2937),
                   ),
                 ),
+
                 const SizedBox(height: 4),
+
+                // Activity name
                 Text(
                   title,
                   style: const TextStyle(
@@ -278,7 +315,10 @@ class MyActivityClaimsView extends StatelessWidget {
                     color: Color(0xFF374151),
                   ),
                 ),
+
                 const SizedBox(height: 10),
+
+                // Activity date
                 Row(
                   children: [
                     const Icon(
@@ -298,7 +338,10 @@ class MyActivityClaimsView extends StatelessWidget {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 6),
+
+                // Activity duration
                 Row(
                   children: [
                     const Icon(
@@ -322,8 +365,10 @@ class MyActivityClaimsView extends StatelessWidget {
 
           const SizedBox(width: 10),
 
+          // Status and action buttons section
           Column(
             children: [
+              // Claim status badge
               Container(
                 width: 94,
                 padding: const EdgeInsets.symmetric(vertical: 9),
@@ -344,6 +389,7 @@ class MyActivityClaimsView extends StatelessWidget {
 
               const SizedBox(height: 10),
 
+              // Button to view claim details
               SizedBox(
                 width: 94,
                 height: 38,
@@ -357,6 +403,8 @@ class MyActivityClaimsView extends StatelessWidget {
                     ),
                     padding: EdgeInsets.zero,
                   ),
+
+                  // Navigate to activity claim details page
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -380,6 +428,7 @@ class MyActivityClaimsView extends StatelessWidget {
                 ),
               ),
 
+              // Show edit button only for pending claims
               if (status == 'PENDING') ...[
                 const SizedBox(height: 10),
                 SizedBox(
@@ -395,6 +444,8 @@ class MyActivityClaimsView extends StatelessWidget {
                       ),
                       padding: EdgeInsets.zero,
                     ),
+
+                    // Navigate to edit claim page
                     onPressed: () {
                       Navigator.push(
                         context,
