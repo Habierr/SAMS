@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sams/login.dart';
-import 'package:sams/pusat_adab/review_curriculum_claims.dart';
+import 'package:sams/Page/Curriculum/review_curriculum_claims.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 // Dashboard page for Pusat Adab user
@@ -67,8 +67,7 @@ class _PusatDashboardState extends State<PusatDashboard> {
   @override
   Widget build(BuildContext context) {
     // Get key for selected date
-    final selectedKey =
-        _selectedDay == null ? null : getDateKey(_selectedDay!);
+    final selectedKey = _selectedDay == null ? null : getDateKey(_selectedDay!);
 
     // Get notes for selected date
     final selectedNotes =
@@ -248,7 +247,6 @@ class _PusatDashboardState extends State<PusatDashboard> {
             topRight: Radius.circular(24),
           ),
         ),
-
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(20),
