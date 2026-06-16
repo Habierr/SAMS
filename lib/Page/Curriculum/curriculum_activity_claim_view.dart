@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'activity_claim_form_view.dart';
 import 'my_activity_claims_view.dart';
 
+// Main menu page for curriculum activity claim module
 class CurriculumActivityClaimView extends StatelessWidget {
   const CurriculumActivityClaimView({super.key});
 
@@ -9,18 +10,24 @@ class CurriculumActivityClaimView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+
+      // App bar for curriculum activity claim page
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(130),
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
           automaticallyImplyLeading: false,
+
+          // Menu button to return to previous page
           leading: IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
             onPressed: () {
               Navigator.pop(context);
             },
           ),
+
+          // App bar title
           title: const Text(
             'CURRICULUM ACTIVITY\nCLAIM',
             textAlign: TextAlign.center,
@@ -31,7 +38,10 @@ class CurriculumActivityClaimView extends StatelessWidget {
               height: 1.2,
             ),
           ),
+
           centerTitle: true,
+
+          // UMPSA logo
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -41,6 +51,8 @@ class CurriculumActivityClaimView extends StatelessWidget {
               ),
             ),
           ],
+
+          // Green gradient background
           flexibleSpace: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -56,6 +68,8 @@ class CurriculumActivityClaimView extends StatelessWidget {
           ),
         ),
       ),
+
+      // Main body container
       body: Container(
         width: double.infinity,
         height: double.infinity,
@@ -66,16 +80,20 @@ class CurriculumActivityClaimView extends StatelessWidget {
             topRight: Radius.circular(13),
           ),
         ),
+
+        // Page content padding
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Button to open new claim submission form
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton.icon(
                   onPressed: () {
+                    // Navigate to activity claim form page
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -100,12 +118,16 @@ class CurriculumActivityClaimView extends StatelessWidget {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
+
+              // Button to view submitted activity claims
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton.icon(
                   onPressed: () {
+                    // Navigate to user's activity claims list
                     Navigator.push(
                       context,
                       MaterialPageRoute(
