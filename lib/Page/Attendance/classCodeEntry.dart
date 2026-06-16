@@ -5,6 +5,7 @@ import 'package:sams/Page/Attendance/attendanceCheckIn.dart';
 import 'package:sams/Page/student/student_dashboard.dart';
 
 class ClassCodeEntry extends StatefulWidget {
+  // Student and selected subject information
   final String studentName;
   final String studentId;
   final String subCode;
@@ -26,10 +27,12 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
   final TextEditingController _classCodeController = TextEditingController();
   bool isLoading = false;
 
+  // UMPSA campus location and allowed attendance radius
   final double umpsaLat = 3.5437;
   final double umpsaLng = 103.4273;
   final double allowedRadiusMeter = 1000;
 
+  // Check whether location service and permission are allowed
   Future<bool> checkLocationPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
@@ -56,6 +59,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     return true;
   }
 
+  // Generate unique attendance ID using Firestore transaction
   Future<String> generateAttendanceId() async {
     final counterRef =
         FirebaseFirestore.instance.collection('counters').doc('attendance');
@@ -81,6 +85,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     });
   }
 
+  // Validate class code, check location, and save attendance record
   Future<void> submitAttendance() async {
     final enteredCode = _classCodeController.text.trim().toUpperCase();
 
@@ -169,6 +174,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
 
       final attendanceId = await generateAttendanceId();
 
+      // Save attendance record into Firestore
       await FirebaseFirestore.instance
           .collection('attendance')
           .doc(attendanceId)
@@ -204,6 +210,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     }
   }
 
+  // Display success message after attendance is recorded
   Future<void> showSuccessDialog({
     required String subName,
     required String date,
@@ -265,6 +272,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     );
   }
 
+  // Display invalid class code message
   Future<void> showInvalidCodeDialog() async {
     await showDialog(
       context: context,
@@ -301,6 +309,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     );
   }
 
+  // Display message when student is outside campus area
   Future<void> showOutsideCampusDialog() async {
     await showDialog(
       context: context,
@@ -341,6 +350,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     );
   }
 
+  // General error dialog
   Future<void> showErrorDialog(String message) async {
     await showDialog(
       context: context,
@@ -359,6 +369,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     );
   }
 
+  // Success icon used in popup
   Widget _successIcon() {
     return Container(
       width: 70,
@@ -383,6 +394,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     );
   }
 
+  // Error icon used in popup
   Widget _errorIcon() {
     return Container(
       width: 70,
@@ -402,6 +414,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     );
   }
 
+  // Reusable popup information row
   Widget _popupInfo(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -431,6 +444,7 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
     );
   }
 
+  // Reusable okay button for dialog
   Widget _okayButton(VoidCallback onPressed) {
     return SizedBox(
       width: 170,
@@ -458,6 +472,8 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+
+      // Student navigation drawer
       drawer: Drawer(
         child: Column(
           children: [
@@ -543,6 +559,8 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
           ],
         ),
       ),
+
+      // SAMS application header
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(90),
         child: AppBar(
@@ -589,6 +607,8 @@ class _ClassCodeEntryState extends State<ClassCodeEntry> {
           ),
         ),
       ),
+
+      // Class code entry form
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.fromLTRB(22, 35, 22, 20),
