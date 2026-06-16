@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sams/Page/Attendance/attendanceReport.dart';
 
+// Lecturer, class and attendance session information
 class SummaryRecord extends StatefulWidget {
   final String lecturerName;
   final String lecturerId;
@@ -38,12 +39,14 @@ class SummaryRecord extends StatefulWidget {
   State<SummaryRecord> createState() => _SummaryRecordState();
 }
 
+// Generate absent student records once when page loads
 class _SummaryRecordState extends State<SummaryRecord> {
   late Future<void> _generateAbsentFuture;
 
   @override
   void initState() {
     super.initState();
+    // Automatically create absent records
     _generateAbsentFuture = generateAbsentStudents();
   }
 
@@ -157,6 +160,7 @@ class _SummaryRecordState extends State<SummaryRecord> {
       final attendanceId = await generateAttendanceId();
       final studentName = await getStudentName(studentId);
 
+      // Check whether attendance record already exists
       await db.collection('attendance').doc(attendanceId).set({
         'attendanceID': attendanceId,
         'studentID': studentId,
